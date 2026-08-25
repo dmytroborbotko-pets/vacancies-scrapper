@@ -35,42 +35,16 @@ export async function addSearchConfig(formData: FormData) {
   revalidatePath("/settings");
 }
 
-async function logDebug(label: string, detail: string) {
-  try {
-    await prisma.$executeRawUnsafe(
-      `CREATE TABLE IF NOT EXISTS "_debug_log" (id SERIAL PRIMARY KEY, label TEXT, detail TEXT, created_at TIMESTAMPTZ DEFAULT now())`,
-    );
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO "_debug_log" (label, detail) VALUES ($1, $2)`,
-      label,
-      detail,
-    );
-  } catch {
-    // best-effort diagnostic only
-  }
-}
-
 export async function toggleSearchConfig(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const nextActive = formData.get("nextActive") === "true";
   if (!id) return;
 
-  await logDebug("toggleSearchConfig:start", id);
-  try {
-    await prisma.searchConfig.update({
-      where: { id },
-      data: { active: nextActive },
-    });
-    await logDebug("toggleSearchConfig:db-ok", id);
-    revalidatePath("/settings");
-    await logDebug("toggleSearchConfig:revalidate-ok", id);
-  } catch (error) {
-    await logDebug(
-      "toggleSearchConfig:error",
-      error instanceof Error ? `${error.message}\n${error.stack}` : String(error),
-    );
-    throw error;
-  }
+  await prisma.searchConfig.update({
+    where: { id },
+    data: { active: nextActive },
+  });
+  revalidatePath("/settings");
 }
 
 export async function deleteSearchConfig(formData: FormData) {
@@ -83,24 +57,14 @@ export async function deleteSearchConfig(formData: FormData) {
 }
 
 export async function runSearchesNow() {
-  try {
-    await runActiveSearches();
-  } catch (error) {
-    console.error("runSearchesNow failed:", error);
-    throw error;
-  }
+  await runActiveSearches();
   revalidatePath("/settings");
   revalidatePath("/vacancies");
   revalidatePath("/");
 }
 
 export async function runMatchingNow() {
-  try {
-    await scoreAllProfiles();
-  } catch (error) {
-    console.error("runMatchingNow failed:", error);
-    throw error;
-  }
+  await scoreAllProfiles();
   revalidatePath("/settings");
   revalidatePath("/vacancies");
   revalidatePath("/");
