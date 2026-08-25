@@ -24,9 +24,11 @@ export async function addSearchConfig(formData: FormData) {
       keywords,
       source,
       cvProfileId,
-      // Djinni-only filters; harmless no-ops for a DOU config.
+      // expLevels is Djinni-only (no DOU equivalent); requireReservation
+      // applies to both — Djinni via editorial=reservation, DOU via
+      // ANDing the keyword "бронювання" into the search query.
       expLevels: source === "DJINNI" && expLevels.length > 0 ? expLevels.join(",") : null,
-      requireReservation: source === "DJINNI" && requireReservation,
+      requireReservation,
     })),
   });
 

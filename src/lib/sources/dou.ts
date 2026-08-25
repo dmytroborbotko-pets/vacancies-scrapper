@@ -3,6 +3,16 @@ import type { FetchedVacancy } from "@/lib/sources/types";
 
 const SEARCH_URL = "https://jobs.dou.ua/vacancies/";
 
+export interface FetchDouOptions {
+  // DOU has no separate curated "reservation" filter like Djinni's
+  // editorial=reservation — its own site UI suggests searching the plain
+  // keyword "бронювання" instead. Its `search` param ANDs space-separated
+  // words against the full vacancy text, so appending it narrows results
+  // to postings that mention both the skill and reservation (confirmed:
+  // "React" alone → 21 results, "React бронювання" combined → 4).
+  requireReservation?: boolean;
+}
+
 // dou.ua's Terms of Use reportedly prohibit automated collection without
 // the administration's consent (unverified directly — the page 404'd when
 // checked — but referenced across multiple DOU community threads). This
@@ -11,8 +21,12 @@ const SEARCH_URL = "https://jobs.dou.ua/vacancies/";
 // keyword, first page of results only, no pagination follow-through.
 export async function fetchDouVacancies(
   keyword: string,
+  options: FetchDouOptions = {},
 ): Promise<FetchedVacancy[]> {
-  const url = `${SEARCH_URL}?${new URLSearchParams({ search: keyword })}`;
+  const searchTerm = options.requireReservation
+    ? `${keyword} бронювання`
+    : keyword;
+  const url = `${SEARCH_URL}?${new URLSearchParams({ search: searchTerm })}`;
   const response = await fetch(url, {
     headers: {
       "User-Agent":

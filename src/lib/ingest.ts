@@ -37,7 +37,9 @@ export async function ingestSearchConfig(
   for (const term of terms) {
     const vacancies =
       searchConfig.source === "DOU"
-        ? await fetchDouVacancies(term)
+        ? await fetchDouVacancies(term, {
+            requireReservation: searchConfig.requireReservation,
+          })
         : await fetchDjinniVacancies(term, {
             expLevels,
             requireReservation: searchConfig.requireReservation,

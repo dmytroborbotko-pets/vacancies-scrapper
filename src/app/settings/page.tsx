@@ -174,8 +174,9 @@ export default async function SettingsPage() {
                     name="requireReservation"
                     value="true"
                   />
-                  Лише вакансії з бронюванням від мобілізації (перевірена
-                  добірка Djinni, лише Djinni)
+                  Лише вакансії з бронюванням від мобілізації (Djinni:
+                  перевірена добірка; DOU: пошук також враховує слово
+                  &laquo;бронювання&raquo;)
                 </label>
               </form>
 
