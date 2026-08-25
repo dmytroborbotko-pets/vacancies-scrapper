@@ -131,18 +131,20 @@ export default async function SettingsPage() {
                 </p>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
-                    <span className="text-zinc-500">Джерело:</span>
+                    <span className="text-zinc-500">
+                      Джерела (можна обидва):
+                    </span>
                     <label className="flex items-center gap-1">
                       <input
-                        type="radio"
-                        name="source"
+                        type="checkbox"
+                        name="sources"
                         value="DJINNI"
                         defaultChecked
                       />
                       Djinni
                     </label>
                     <label className="flex items-center gap-1">
-                      <input type="radio" name="source" value="DOU" />
+                      <input type="checkbox" name="sources" value="DOU" />
                       DOU (експериментально)
                     </label>
                   </div>
@@ -150,7 +152,8 @@ export default async function SettingsPage() {
                     DOU: за повідомленнями спільноти сайт забороняє
                     автоматизований збір даних без згоди адміністрації —
                     вмикається на власний розсуд, використовується
-                    консервативно (мінімум запитів, без пагінації).
+                    консервативно (мінімум запитів, без пагінації). Кожна
+                    вакансія позначена джерелом, звідки вона знайдена.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

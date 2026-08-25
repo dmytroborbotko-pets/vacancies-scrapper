@@ -11,19 +11,25 @@ export async function addSearchConfig(formData: FormData) {
   const cvProfileId = String(formData.get("cvProfileId") ?? "");
   if (!keywords || !cvProfileId) return;
 
-  const source = formData.get("source") === "DOU" ? "DOU" : "DJINNI";
+  const selectedSources = formData.getAll("sources").map(String);
+  const sources = (
+    selectedSources.length > 0 ? selectedSources : ["DJINNI"]
+  ) as ("DJINNI" | "DOU")[];
   const expLevels = formData.getAll("expLevels").map(String);
   const requireReservation = formData.get("requireReservation") === "true";
 
-  await prisma.searchConfig.create({
-    data: {
+  // One row per selected source (not a single "both" row) — each source
+  // has its own fetch logic and Vacancy.source already tags every result,
+  // so a vacancy list naturally shows which source it came from.
+  await prisma.searchConfig.createMany({
+    data: sources.map((source) => ({
       keywords,
       source,
       cvProfileId,
       // Djinni-only filters; harmless no-ops for a DOU config.
       expLevels: source === "DJINNI" && expLevels.length > 0 ? expLevels.join(",") : null,
       requireReservation: source === "DJINNI" && requireReservation,
-    },
+    })),
   });
 
   revalidatePath("/settings");
