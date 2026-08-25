@@ -24,9 +24,12 @@ export default async function VacanciesPage() {
       }
     }
     const scoreByVacancyId = new Map<string, number>();
+    const dismissedVacancyIds = new Set<string>();
     for (const match of profile.matches) {
       scoreByVacancyId.set(match.vacancyId, match.score);
+      if (match.status === "DISMISSED") dismissedVacancyIds.add(match.vacancyId);
     }
+    for (const id of dismissedVacancyIds) vacancyById.delete(id);
 
     const vacancies = Array.from(vacancyById.values()).sort((a, b) => {
       const scoreA = scoreByVacancyId.get(a.id);

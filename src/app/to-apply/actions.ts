@@ -20,7 +20,14 @@ export async function deleteMatch(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  await prisma.match.delete({ where: { id } });
+  // Mark dismissed rather than deleting the row: scoring only rescores a
+  // vacancy when it has no Match row yet for that CV, so a hard delete
+  // would let the daily scan resurrect the same vacancy the next day.
+  await prisma.match.update({
+    where: { id },
+    data: { status: "DISMISSED" },
+  });
 
   revalidatePath("/to-apply");
+  revalidatePath("/vacancies");
 }

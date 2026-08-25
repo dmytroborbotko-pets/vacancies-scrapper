@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Source {
@@ -25,7 +25,11 @@ enum MatchStatus {
 model CvProfile {
   id            String   @id @default(cuid())
   label         String
-  fileUrl       String
+  // Original uploaded filename (for extension/content-type on re-download);
+  // the file itself is stored in the DB, not on disk — Vercel's filesystem
+  // is ephemeral, so a local upload would vanish on the next deploy.
+  fileName      String
+  fileData      Bytes
   extractedText String
   createdAt     DateTime @default(now())
 
@@ -37,21 +41,21 @@ model CvProfile {
 // scoped to that profile, so two CVs never share a "which vacancies match
 // which CV" view.
 model SearchConfig {
-  id          String    @id @default(cuid())
-  keywords    String
-  source      Source
+  id                 String    @id @default(cuid())
+  keywords           String
+  source             Source
   // Comma-separated Djinni exp_level values (e.g. "1y,2y"). Null/empty
   // means no experience filter.
-  expLevels   String?
+  expLevels          String?
   // Djinni's own curated "Бронювання" collection tag (editorial=reservation)
   // — companies Djinni has verified offer military draft reservation. Far
   // more precise than text-searching for the word, which mostly hits
   // vacancies that just mention the topic without actually offering it.
-  requireReservation Boolean @default(false)
-  active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  cvProfile   CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
-  cvProfileId String
+  requireReservation Boolean   @default(false)
+  active             Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  cvProfile          CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
+  cvProfileId        String
 
   discoveries VacancyDiscovery[]
 }

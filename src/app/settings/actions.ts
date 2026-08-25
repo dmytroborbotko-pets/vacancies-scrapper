@@ -1,14 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { mkdir, writeFile, unlink } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { runActiveSearches } from "@/lib/ingest";
 import { extractTextFromFile } from "@/lib/cv";
 import { scoreAllProfiles } from "@/lib/scoring";
-
-const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads", "cv");
 
 export async function addSearchConfig(formData: FormData) {
   const keywords = String(formData.get("keywords") ?? "").trim();
@@ -75,15 +71,11 @@ export async function uploadCvProfile(formData: FormData) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const extractedText = await extractTextFromFile(buffer, file.name);
 
-  await mkdir(UPLOADS_DIR, { recursive: true });
-  const ext = file.name.toLowerCase().split(".").pop();
-  const storedFilename = `${crypto.randomUUID()}.${ext}`;
-  await writeFile(path.join(UPLOADS_DIR, storedFilename), buffer);
-
   await prisma.cvProfile.create({
     data: {
       label,
-      fileUrl: `/uploads/cv/${storedFilename}`,
+      fileName: file.name,
+      fileData: buffer,
       extractedText,
     },
   });
@@ -95,10 +87,7 @@ export async function deleteCvProfile(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  const profile = await prisma.cvProfile.delete({ where: { id } });
-
-  const storedPath = path.join(process.cwd(), "public", profile.fileUrl);
-  await unlink(storedPath).catch(() => {});
+  await prisma.cvProfile.delete({ where: { id } });
 
   revalidatePath("/settings");
   revalidatePath("/vacancies");
