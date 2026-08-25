@@ -5,7 +5,7 @@ export default async function Home() {
   const [vacancyCount, cvProfileCount, toApplyCount] = await Promise.all([
     prisma.vacancy.count(),
     prisma.cvProfile.count(),
-    prisma.match.count({ where: { status: "NEW" } }),
+    prisma.match.count({ where: { status: "TO_APPLY" } }),
   ]);
 
   return (
@@ -14,15 +14,18 @@ export default async function Home() {
       <div className="grid grid-cols-3 gap-4">
         <StatCard label="Вакансій знайдено" value={vacancyCount} />
         <StatCard label="CV-профілів" value={cvProfileCount} />
-        <StatCard label="Нових матчів" value={toApplyCount} />
+        <StatCard label="До подачі" value={toApplyCount} />
       </div>
       <p className="text-sm text-zinc-500">
-        Каркас проєкту готовий: база даних підключена (Prisma + SQLite).
-        Далі —{" "}
-        <Link href="/settings" className="underline">
-          налаштування ключових слів
+        <Link href="/vacancies" className="underline">
+          Вакансії
         </Link>{" "}
-        та інтеграція з Djinni RSS.
+        зі збігом ≥55% автоматично отримують мотиваційний лист і потрапляють
+        у{" "}
+        <Link href="/to-apply" className="underline">
+          «До подачі»
+        </Link>
+        .
       </p>
     </div>
   );

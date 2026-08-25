@@ -29,15 +29,31 @@ model CvProfile {
   extractedText String
   createdAt     DateTime @default(now())
 
-  matches Match[]
+  searchConfigs SearchConfig[]
+  matches       Match[]
 }
 
+// A keyword search belongs to one CV profile: results found under it are
+// scoped to that profile, so two CVs never share a "which vacancies match
+// which CV" view.
 model SearchConfig {
-  id        String   @id @default(cuid())
-  keywords  String
-  source    Source
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  keywords    String
+  source      Source
+  // Comma-separated Djinni exp_level values (e.g. "1y,2y"). Null/empty
+  // means no experience filter.
+  expLevels   String?
+  // Djinni's own curated "Бронювання" collection tag (editorial=reservation)
+  // — companies Djinni has verified offer military draft reservation. Far
+  // more precise than text-searching for the word, which mostly hits
+  // vacancies that just mention the topic without actually offering it.
+  requireReservation Boolean @default(false)
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  cvProfile   CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
+  cvProfileId String
+
+  discoveries VacancyDiscovery[]
 }
 
 model Vacancy {
@@ -49,14 +65,29 @@ model Vacancy {
   rawText   String
   foundAt   DateTime @default(now())
 
-  matches Match[]
+  matches     Match[]
+  discoveries VacancyDiscovery[]
+}
+
+// Join between a Vacancy (globally deduped by URL) and the SearchConfig
+// that found it, so the same vacancy can be discovered under more than one
+// CV profile without duplicating the Vacancy row.
+model VacancyDiscovery {
+  id             String       @id @default(cuid())
+  vacancy        Vacancy      @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancyId      String
+  searchConfig   SearchConfig @relation(fields: [searchConfigId], references: [id], onDelete: Cascade)
+  searchConfigId String
+  createdAt      DateTime     @default(now())
+
+  @@unique([vacancyId, searchConfigId])
 }
 
 model Match {
   id          String      @id @default(cuid())
-  vacancy     Vacancy     @relation(fields: [vacancyId], references: [id])
+  vacancy     Vacancy     @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   vacancyId   String
-  cvProfile   CvProfile   @relation(fields: [cvProfileId], references: [id])
+  cvProfile   CvProfile   @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
   cvProfileId String
   score       Int
   coverLetter String?

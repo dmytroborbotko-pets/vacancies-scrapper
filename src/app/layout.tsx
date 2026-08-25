@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 const navItems = [
+  { href: "/vacancies", label: "Вакансії" },
   { href: "/to-apply", label: "До подачі" },
   { href: "/applied", label: "Подався" },
   { href: "/settings", label: "Налаштування" },

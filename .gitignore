@@ -45,3 +45,6 @@ next-env.d.ts
 # local sqlite database
 *.db
 *.db-journal
+
+# user-uploaded CVs (contain personal data, not for git)
+/public/uploads/
