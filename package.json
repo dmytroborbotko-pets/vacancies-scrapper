@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.120.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "cheerio": "^1.2.0",
     "html-to-text": "^10.0.1",
     "mammoth": "^1.12.1",
     "next": "16.3.2",

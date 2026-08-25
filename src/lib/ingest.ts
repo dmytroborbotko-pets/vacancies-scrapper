@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { fetchDjinniVacancies, type FetchedVacancy } from "@/lib/sources/djinni";
+import { fetchDjinniVacancies } from "@/lib/sources/djinni";
+import { fetchDouVacancies } from "@/lib/sources/dou";
+import type { FetchedVacancy } from "@/lib/sources/types";
 import type { SearchConfig } from "@/generated/prisma/client";
 
 export interface IngestResult {
@@ -21,6 +23,8 @@ function splitKeywordTerms(keywords: string): string[] {
     .filter(Boolean);
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function ingestSearchConfig(
   searchConfig: SearchConfig,
 ): Promise<IngestResult> {
@@ -31,14 +35,24 @@ export async function ingestSearchConfig(
 
   const vacancyBySourceUrl = new Map<string, FetchedVacancy>();
   for (const term of terms) {
-    const vacancies = await fetchDjinniVacancies(term, {
-      expLevels,
-      requireReservation: searchConfig.requireReservation,
-    });
+    const vacancies =
+      searchConfig.source === "DOU"
+        ? await fetchDouVacancies(term)
+        : await fetchDjinniVacancies(term, {
+            expLevels,
+            requireReservation: searchConfig.requireReservation,
+          });
+
     for (const vacancy of vacancies) {
       if (!vacancyBySourceUrl.has(vacancy.sourceUrl)) {
         vacancyBySourceUrl.set(vacancy.sourceUrl, vacancy);
       }
+    }
+
+    // dou.ua is scraped HTML, not a public feed API — stay conservative
+    // between requests rather than firing one per term back to back.
+    if (searchConfig.source === "DOU" && terms.length > 1) {
+      await sleep(2000);
     }
   }
 
@@ -90,7 +104,7 @@ export async function ingestSearchConfig(
 
 export async function runActiveSearches(): Promise<IngestResult[]> {
   const configs = await prisma.searchConfig.findMany({
-    where: { active: true, source: "DJINNI" },
+    where: { active: true },
   });
 
   const results: IngestResult[] = [];

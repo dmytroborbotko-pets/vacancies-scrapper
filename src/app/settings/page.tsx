@@ -122,16 +122,40 @@ export default async function SettingsPage() {
                     type="submit"
                     className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                   >
-                    Додати (Djinni)
+                    Додати
                   </button>
                 </div>
                 <p className="text-xs text-zinc-500">
                   Через кому — вакансія підходить, якщо в ній є хоча б одне зі
                   слів.
                 </p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+                    <span className="text-zinc-500">Джерело:</span>
+                    <label className="flex items-center gap-1">
+                      <input
+                        type="radio"
+                        name="source"
+                        value="DJINNI"
+                        defaultChecked
+                      />
+                      Djinni
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input type="radio" name="source" value="DOU" />
+                      DOU (експериментально)
+                    </label>
+                  </div>
+                  <p className="text-xs text-amber-600 dark:text-amber-500">
+                    DOU: за повідомленнями спільноти сайт забороняє
+                    автоматизований збір даних без згоди адміністрації —
+                    вмикається на власний розсуд, використовується
+                    консервативно (мінімум запитів, без пагінації).
+                  </p>
+                </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="text-xs text-zinc-500">
-                    Досвід (необов&apos;язково):
+                    Досвід, лише Djinni (необов&apos;язково):
                   </span>
                   {EXP_LEVEL_OPTIONS.map((level) => (
                     <label
@@ -154,7 +178,7 @@ export default async function SettingsPage() {
                     value="true"
                   />
                   Лише вакансії з бронюванням від мобілізації (перевірена
-                  добірка Djinni)
+                  добірка Djinni, лише Djinni)
                 </label>
               </form>
 

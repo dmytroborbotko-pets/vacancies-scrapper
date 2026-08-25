@@ -11,16 +11,18 @@ export async function addSearchConfig(formData: FormData) {
   const cvProfileId = String(formData.get("cvProfileId") ?? "");
   if (!keywords || !cvProfileId) return;
 
+  const source = formData.get("source") === "DOU" ? "DOU" : "DJINNI";
   const expLevels = formData.getAll("expLevels").map(String);
   const requireReservation = formData.get("requireReservation") === "true";
 
   await prisma.searchConfig.create({
     data: {
       keywords,
-      source: "DJINNI",
+      source,
       cvProfileId,
-      expLevels: expLevels.length > 0 ? expLevels.join(",") : null,
-      requireReservation,
+      // Djinni-only filters; harmless no-ops for a DOU config.
+      expLevels: source === "DJINNI" && expLevels.length > 0 ? expLevels.join(",") : null,
+      requireReservation: source === "DJINNI" && requireReservation,
     },
   });
 

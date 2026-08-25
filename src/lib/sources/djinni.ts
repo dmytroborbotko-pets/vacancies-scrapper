@@ -1,15 +1,10 @@
 import Parser from "rss-parser";
 import { convert } from "html-to-text";
+import type { FetchedVacancy } from "@/lib/sources/types";
 
 const RSS_BASE_URL = "https://djinni.co/jobs/rss/";
 
-export interface FetchedVacancy {
-  source: "DJINNI";
-  sourceUrl: string;
-  title: string;
-  company: string | null;
-  rawText: string;
-}
+export type { FetchedVacancy };
 
 const parser = new Parser();
 
