@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Source {
+  DJINNI
+  DOU
+}
+
+enum MatchStatus {
+  NEW
+  TO_APPLY
+  APPLIED
+  DISMISSED
+}
+
+model CvProfile {
+  id            String   @id @default(cuid())
+  label         String
+  fileUrl       String
+  extractedText String
+  createdAt     DateTime @default(now())
+
+  matches Match[]
+}
+
+model SearchConfig {
+  id        String   @id @default(cuid())
+  keywords  String
+  source    Source
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Vacancy {
+  id        String   @id @default(cuid())
+  source    Source
+  sourceUrl String   @unique
+  title     String
+  company   String?
+  rawText   String
+  foundAt   DateTime @default(now())
+
+  matches Match[]
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  vacancy     Vacancy     @relation(fields: [vacancyId], references: [id])
+  vacancyId   String
+  cvProfile   CvProfile   @relation(fields: [cvProfileId], references: [id])
+  cvProfileId String
+  score       Int
+  coverLetter String?
+  status      MatchStatus @default(NEW)
+  createdAt   DateTime    @default(now())
+
+  @@unique([vacancyId, cvProfileId])
+}
