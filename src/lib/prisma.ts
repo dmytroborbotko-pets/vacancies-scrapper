@@ -16,7 +16,11 @@ const globalForPrisma = globalThis as unknown as {
 // max keeps each instance's footprint low regardless of environment.
 const pool =
   globalForPrisma.pgPool ??
-  new Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 9,
+    connectionTimeoutMillis: 10_000,
+  });
 const adapter = new PrismaPg(pool);
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
