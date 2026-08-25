@@ -10,6 +10,12 @@ import {
   uploadCvProfile,
 } from "./actions";
 
+// Search + LLM matching can take well past Vercel's default Function
+// duration when invoked as a Server Action from this page (unlike the
+// cron route, which sets this explicitly) — without it, "Запустити пошук
+// зараз" times out mid-run and the client sees a 503.
+export const maxDuration = 300;
+
 type CvProfileWithConfigs = CvProfile & { searchConfigs: SearchConfig[] };
 
 const EXP_LEVEL_OPTIONS = [
