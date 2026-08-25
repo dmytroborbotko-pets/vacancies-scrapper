@@ -47,7 +47,7 @@ export default async function RegisterPage({
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-16">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-10 sm:py-16">
       <h1 className="text-2xl font-semibold">Реєстрація</h1>
       {error && (
         <p className="text-sm text-red-500">

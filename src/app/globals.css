@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/*
+ * Custom breakpoints (Bootstrap-style):
+ * xs   0–575px   base styles, no prefix
+ * sm   576–767px sm:
+ * md   768–991px md:
+ * lg   992–1199px lg:
+ * xl   1200–1399px xl:
+ * xxl  1400px+   2xl:
+ */
+@theme {
+  --breakpoint-sm: 36rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 62rem;
+  --breakpoint-xl: 75rem;
+  --breakpoint-2xl: 87.5rem;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

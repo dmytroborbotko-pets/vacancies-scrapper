@@ -91,7 +91,7 @@ export default async function ToApplyPage({
                   key={match.id}
                   className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <a
                         href={match.vacancy.sourceUrl}

@@ -81,7 +81,7 @@ export default async function VacanciesPage() {
                       key={vacancy.id}
                       className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
                     >
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <a
                           href={vacancy.sourceUrl}
                           target="_blank"

@@ -29,9 +29,9 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Налаштування</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <a
             href="/api/run-search"
             className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
@@ -49,20 +49,20 @@ export default async function SettingsPage() {
 
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold">Додати CV-профіль</h2>
-        <form action={uploadCvProfile} className="flex gap-2">
+        <form action={uploadCvProfile} className="flex flex-col gap-2 sm:flex-row">
           <input
             type="text"
             name="label"
             placeholder="напр. Backend Python"
             required
-            className="flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm sm:flex-1 dark:border-zinc-700 dark:bg-zinc-900"
           />
           <input
             type="file"
             name="file"
             accept=".pdf,.docx"
             required
-            className="flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-1 dark:border-zinc-700 dark:bg-zinc-900 dark:file:bg-zinc-800"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-1 sm:flex-1 dark:border-zinc-700 dark:bg-zinc-900 dark:file:bg-zinc-800"
           />
           <button
             type="submit"
@@ -87,14 +87,14 @@ export default async function SettingsPage() {
               key={profile.id}
               className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
             >
-              <div className="flex items-start justify-between">
-                <div>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
                   <div className="font-medium">{profile.label}</div>
                   <div className="mt-1 line-clamp-2 text-xs text-zinc-500">
                     {profile.extractedText}
                   </div>
                 </div>
-                <form action={deleteCvProfile}>
+                <form action={deleteCvProfile} className="shrink-0">
                   <input type="hidden" name="id" value={profile.id} />
                   <button
                     type="submit"
@@ -107,13 +107,13 @@ export default async function SettingsPage() {
 
               <form action={addSearchConfig} className="mt-4 flex flex-col gap-2">
                 <input type="hidden" name="cvProfileId" value={profile.id} />
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     name="keywords"
                     placeholder="напр. Python, FastAPI, Django"
                     required
-                    className="flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm sm:flex-1 dark:border-zinc-700 dark:bg-zinc-900"
                   />
                   <button
                     type="submit"
@@ -127,7 +127,7 @@ export default async function SettingsPage() {
                   слів.
                 </p>
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
                     <span className="text-zinc-500">
                       Джерела (можна обидва):
                     </span>
@@ -192,7 +192,7 @@ export default async function SettingsPage() {
                   {profile.searchConfigs.map((config) => (
                     <li
                       key={config.id}
-                      className="flex items-center justify-between rounded-md border border-zinc-200 p-2 text-sm dark:border-zinc-800"
+                      className="flex flex-col gap-2 rounded-md border border-zinc-200 p-2 text-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800"
                     >
                       <span>
                         {config.keywords} · {config.source}
