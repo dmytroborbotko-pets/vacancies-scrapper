@@ -2,9 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { runActiveSearches } from "@/lib/ingest";
 import { extractTextFromFile } from "@/lib/cv";
-import { scoreAllProfiles } from "@/lib/scoring";
 
 export async function addSearchConfig(formData: FormData) {
   const keywords = String(formData.get("keywords") ?? "").trim();
@@ -54,56 +52,6 @@ export async function deleteSearchConfig(formData: FormData) {
   await prisma.searchConfig.delete({ where: { id } });
   revalidatePath("/settings");
   revalidatePath("/vacancies");
-}
-
-async function logDebug(label: string, detail: string) {
-  try {
-    await prisma.$executeRawUnsafe(
-      `CREATE TABLE IF NOT EXISTS "_debug_log" (id SERIAL PRIMARY KEY, label TEXT, detail TEXT, created_at TIMESTAMPTZ DEFAULT now())`,
-    );
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO "_debug_log" (label, detail) VALUES ($1, $2)`,
-      label,
-      detail,
-    );
-  } catch {
-    // best-effort diagnostic only
-  }
-}
-
-export async function runSearchesNow() {
-  await logDebug("runSearchesNow", "start");
-  try {
-    await runActiveSearches();
-    await logDebug("runSearchesNow", "search-ok");
-  } catch (error) {
-    await logDebug(
-      "runSearchesNow:search-error",
-      error instanceof Error ? `${error.message}\n${error.stack}` : String(error),
-    );
-    throw error;
-  }
-  try {
-    revalidatePath("/settings");
-    await logDebug("runSearchesNow", "revalidate-settings-ok");
-    revalidatePath("/vacancies");
-    await logDebug("runSearchesNow", "revalidate-vacancies-ok");
-    revalidatePath("/");
-    await logDebug("runSearchesNow", "revalidate-home-ok");
-  } catch (error) {
-    await logDebug(
-      "runSearchesNow:revalidate-error",
-      error instanceof Error ? `${error.message}\n${error.stack}` : String(error),
-    );
-    throw error;
-  }
-}
-
-export async function runMatchingNow() {
-  await scoreAllProfiles();
-  revalidatePath("/settings");
-  revalidatePath("/vacancies");
-  revalidatePath("/");
 }
 
 export async function uploadCvProfile(formData: FormData) {

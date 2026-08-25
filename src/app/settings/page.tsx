@@ -5,16 +5,8 @@ import {
   toggleSearchConfig,
   deleteSearchConfig,
   deleteCvProfile,
-  runSearchesNow,
-  runMatchingNow,
   uploadCvProfile,
 } from "./actions";
-
-// Search + LLM matching can take well past Vercel's default Function
-// duration when invoked as a Server Action from this page (unlike the
-// cron route, which sets this explicitly) — without it, "Запустити пошук
-// зараз" times out mid-run and the client sees a 503.
-export const maxDuration = 300;
 
 type CvProfileWithConfigs = CvProfile & { searchConfigs: SearchConfig[] };
 
@@ -37,22 +29,18 @@ export default async function SettingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Налаштування</h1>
         <div className="flex gap-2">
-          <form action={runSearchesNow}>
-            <button
-              type="submit"
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-            >
-              Запустити пошук зараз (усі CV)
-            </button>
-          </form>
-          <form action={runMatchingNow}>
-            <button
-              type="submit"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              Порахувати % збігу
-            </button>
-          </form>
+          <a
+            href="/api/run-search"
+            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          >
+            Запустити пошук зараз (усі CV)
+          </a>
+          <a
+            href="/api/run-matching"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            Порахувати % збігу
+          </a>
         </div>
       </div>
 
