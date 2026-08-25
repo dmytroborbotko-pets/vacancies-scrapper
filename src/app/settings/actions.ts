@@ -57,14 +57,24 @@ export async function deleteSearchConfig(formData: FormData) {
 }
 
 export async function runSearchesNow() {
-  await runActiveSearches();
+  try {
+    await runActiveSearches();
+  } catch (error) {
+    console.error("runSearchesNow failed:", error);
+    throw error;
+  }
   revalidatePath("/settings");
   revalidatePath("/vacancies");
   revalidatePath("/");
 }
 
 export async function runMatchingNow() {
-  await scoreAllProfiles();
+  try {
+    await scoreAllProfiles();
+  } catch (error) {
+    console.error("runMatchingNow failed:", error);
+    throw error;
+  }
   revalidatePath("/settings");
   revalidatePath("/vacancies");
   revalidatePath("/");
