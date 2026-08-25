@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import type { Match, Vacancy, CvProfile } from "@/generated/prisma/client";
+import { requireUserId } from "@/lib/session";
 import { markApplied, deleteMatch } from "./actions";
 
 type MatchWithRelations = Match & { vacancy: Vacancy; cvProfile: CvProfile };
@@ -10,19 +11,21 @@ export default async function ToApplyPage({
 }: {
   searchParams: Promise<{ cv?: string }>;
 }) {
+  const userId = await requireUserId();
   const { cv: cvFilter } = await searchParams;
 
   const [matches, cvProfiles] = await Promise.all([
     prisma.match.findMany({
       where: {
         status: "TO_APPLY",
+        cvProfile: { userId },
         ...(cvFilter ? { cvProfileId: cvFilter } : {}),
       },
       include: { vacancy: true, cvProfile: true },
       orderBy: { score: "desc" },
     }),
     prisma.cvProfile.findMany({
-      where: { matches: { some: { status: "TO_APPLY" } } },
+      where: { userId, matches: { some: { status: "TO_APPLY" } } },
       orderBy: { createdAt: "desc" },
     }),
   ]);

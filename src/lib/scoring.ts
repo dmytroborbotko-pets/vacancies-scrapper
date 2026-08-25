@@ -61,8 +61,22 @@ export async function scoreCvProfile(
   return { cvProfileId: cvProfile.id, scored, toApply };
 }
 
+// System-wide: used by the daily cron job.
 export async function scoreAllProfiles(): Promise<ScoringResult[]> {
   const profiles = await prisma.cvProfile.findMany();
+  const results: ScoringResult[] = [];
+  for (const profile of profiles) {
+    results.push(await scoreCvProfile(profile));
+  }
+  return results;
+}
+
+// Scoped to one user's own CV profiles — used by the manual "Порахувати %
+// збігу" button.
+export async function scoreProfilesForUser(
+  userId: string,
+): Promise<ScoringResult[]> {
+  const profiles = await prisma.cvProfile.findMany({ where: { userId } });
   const results: ScoringResult[] = [];
   for (const profile of profiles) {
     results.push(await scoreCvProfile(profile));

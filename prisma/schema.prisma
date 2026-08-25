@@ -22,8 +22,19 @@ enum MatchStatus {
   DISMISSED
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  cvProfiles CvProfile[]
+}
+
 model CvProfile {
   id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
   label         String
   // Original uploaded filename (for extension/content-type on re-download);
   // the file itself is stored in the DB, not on disk — Vercel's filesystem

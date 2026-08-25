@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { CvProfile, SearchConfig } from "@/generated/prisma/client";
+import { requireUserId } from "@/lib/session";
 import {
   addSearchConfig,
   toggleSearchConfig,
@@ -19,7 +20,9 @@ const EXP_LEVEL_OPTIONS = [
 ];
 
 export default async function SettingsPage() {
+  const userId = await requireUserId();
   const cvProfiles: CvProfileWithConfigs[] = await prisma.cvProfile.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     include: { searchConfigs: { orderBy: { createdAt: "desc" } } },
   });

@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import type { Vacancy } from "@/generated/prisma/client";
+import { requireUserId } from "@/lib/session";
 
 export default async function VacanciesPage() {
+  const userId = await requireUserId();
   const cvProfiles = await prisma.cvProfile.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
       searchConfigs: {

@@ -104,9 +104,27 @@ export async function ingestSearchConfig(
   };
 }
 
+// System-wide: used by the daily cron job, which scans every user's active
+// searches in one run — not scoped to a session.
 export async function runActiveSearches(): Promise<IngestResult[]> {
   const configs = await prisma.searchConfig.findMany({
     where: { active: true },
+  });
+
+  const results: IngestResult[] = [];
+  for (const config of configs) {
+    results.push(await ingestSearchConfig(config));
+  }
+  return results;
+}
+
+// Scoped to one user's own configs — used by the manual "Запустити пошук
+// зараз" button, which must never run another user's searches.
+export async function runActiveSearchesForUser(
+  userId: string,
+): Promise<IngestResult[]> {
+  const configs = await prisma.searchConfig.findMany({
+    where: { active: true, cvProfile: { userId } },
   });
 
   const results: IngestResult[] = [];

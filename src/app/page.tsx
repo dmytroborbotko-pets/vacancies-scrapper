@@ -1,11 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/session";
 
 export default async function Home() {
+  const userId = await requireUserId();
+
   const [vacancyCount, cvProfileCount, toApplyCount] = await Promise.all([
-    prisma.vacancy.count(),
-    prisma.cvProfile.count(),
-    prisma.match.count({ where: { status: "TO_APPLY" } }),
+    prisma.vacancy.count({
+      where: { discoveries: { some: { searchConfig: { cvProfile: { userId } } } } },
+    }),
+    prisma.cvProfile.count({ where: { userId } }),
+    prisma.match.count({
+      where: { status: "TO_APPLY", cvProfile: { userId } },
+    }),
   ]);
 
   return (

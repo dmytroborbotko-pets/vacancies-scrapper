@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import type { Match, Vacancy, CvProfile } from "@/generated/prisma/client";
+import { requireUserId } from "@/lib/session";
 
 type MatchWithRelations = Match & { vacancy: Vacancy; cvProfile: CvProfile };
 
 export default async function AppliedPage() {
+  const userId = await requireUserId();
   const matches = await prisma.match.findMany({
-    where: { status: "APPLIED" },
+    where: { status: "APPLIED", cvProfile: { userId } },
     include: { vacancy: true, cvProfile: true },
     orderBy: { createdAt: "desc" },
   });
