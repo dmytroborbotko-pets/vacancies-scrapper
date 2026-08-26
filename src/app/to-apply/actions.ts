@@ -16,6 +16,7 @@ export async function markApplied(formData: FormData) {
 
   revalidatePath("/to-apply");
   revalidatePath("/applied");
+  revalidatePath("/vacancies");
 }
 
 export async function deleteMatch(formData: FormData) {

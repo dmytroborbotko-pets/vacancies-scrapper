@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { Vacancy } from "@/generated/prisma/client";
 import { requireUserId } from "@/lib/session";
+import { markApplied, deleteMatch } from "@/app/to-apply/actions";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function VacanciesPage() {
   const userId = await requireUserId();
@@ -27,9 +29,11 @@ export default async function VacanciesPage() {
       }
     }
     const scoreByVacancyId = new Map<string, number>();
+    const matchIdByVacancyId = new Map<string, string>();
     const hiddenVacancyIds = new Set<string>();
     for (const match of profile.matches) {
       scoreByVacancyId.set(match.vacancyId, match.score);
+      matchIdByVacancyId.set(match.vacancyId, match.id);
       // Dismissed (deleted from "До подачі") and applied ("Подався")
       // vacancies are done with — they belong on their own pages, not back
       // in the general list.
@@ -48,7 +52,7 @@ export default async function VacanciesPage() {
       return b.foundAt.getTime() - a.foundAt.getTime();
     });
 
-    return { profile, vacancies, scoreByVacancyId };
+    return { profile, vacancies, scoreByVacancyId, matchIdByVacancyId };
   });
 
   const hasAnyProfile = cvProfiles.length > 0;
@@ -68,7 +72,7 @@ export default async function VacanciesPage() {
           &laquo;Запустити пошук зараз&raquo; на сторінці налаштувань.
         </p>
       ) : (
-        groups.map(({ profile, vacancies, scoreByVacancyId }) => (
+        groups.map(({ profile, vacancies, scoreByVacancyId, matchIdByVacancyId }) => (
           <section key={profile.id} className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold">
               {profile.label} ({vacancies.length})
@@ -81,6 +85,7 @@ export default async function VacanciesPage() {
               <ul className="flex flex-col gap-4">
                 {vacancies.map((vacancy) => {
                   const score = scoreByVacancyId.get(vacancy.id);
+                  const matchId = matchIdByVacancyId.get(vacancy.id);
                   const scoreBorder =
                     score === undefined
                       ? "border-zinc-200 dark:border-zinc-800"
@@ -129,6 +134,28 @@ export default async function VacanciesPage() {
                       <p className="mt-2 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
                         {vacancy.rawText}
                       </p>
+                      {matchId && (
+                        <div className="mt-3 flex gap-2">
+                          <form action={markApplied}>
+                            <input type="hidden" name="id" value={matchId} />
+                            <SubmitButton
+                              pendingText="…"
+                              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                            >
+                              Подався
+                            </SubmitButton>
+                          </form>
+                          <form action={deleteMatch}>
+                            <input type="hidden" name="id" value={matchId} />
+                            <SubmitButton
+                              pendingText="…"
+                              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                            >
+                              Видалити
+                            </SubmitButton>
+                          </form>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
