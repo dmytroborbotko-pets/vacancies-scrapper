@@ -43,7 +43,7 @@ export default async function AppliedPage() {
       </div>
 
       {matches.length === 0 ? (
-        <p className="text-sm text-zinc-500">Історія подань поки порожня.</p>
+        <p className="text-base text-zinc-500">Історія подань поки порожня.</p>
       ) : (
         <>
           <MatchList matches={base} />
@@ -118,7 +118,7 @@ function MatchList({ matches }: { matches: MatchWithRelations[] }) {
                   <SubmitButton
                     pendingText="…"
                     className={
-                      "rounded-full px-3 py-1 text-sm font-medium " +
+                      "rounded-full px-3 py-1 text-base font-medium " +
                       (match.outcome === btn.value
                         ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                         : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")

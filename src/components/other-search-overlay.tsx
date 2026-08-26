@@ -128,7 +128,7 @@ export function OtherSearchTrigger({
             {!done && !error && (
               <>
                 <Spinner className="h-8 w-8 text-zinc-300" />
-                <p className="text-sm font-medium text-zinc-300">{status}</p>
+                <p className="text-base font-medium text-zinc-300">{status}</p>
                 {showNarration && (
                   <div
                     ref={scrollRef}
@@ -140,7 +140,7 @@ export function OtherSearchTrigger({
                 <button
                   type="button"
                   onClick={cancel}
-                  className="text-sm text-zinc-500 underline hover:text-zinc-300"
+                  className="text-base text-zinc-500 underline hover:text-zinc-300"
                 >
                   Скасувати
                 </button>
@@ -150,7 +150,7 @@ export function OtherSearchTrigger({
             {done && (
               <>
                 <p className="text-lg font-medium text-zinc-100">Готово</p>
-                <p className="text-sm text-zinc-400">
+                <p className="text-base text-zinc-400">
                   {done === "unknown"
                     ? "Пошук завершився. Онови сторінку, щоб побачити нові вакансії, якщо вони є."
                     : `Знайдено: ${done.found} · Нових: ${done.created}`}
@@ -158,7 +158,7 @@ export function OtherSearchTrigger({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300"
+                  className="rounded-md bg-zinc-50 px-4 py-2 text-base font-medium text-zinc-900 hover:bg-zinc-300"
                 >
                   Закрити
                 </button>
@@ -168,11 +168,11 @@ export function OtherSearchTrigger({
             {error && (
               <>
                 <p className="text-lg font-medium text-red-400">Помилка</p>
-                <p className="text-sm text-zinc-400">{error}</p>
+                <p className="text-base text-zinc-400">{error}</p>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900"
+                  className="rounded-md border border-zinc-700 px-4 py-2 text-base font-medium text-zinc-300 hover:bg-zinc-900"
                 >
                   Закрити
                 </button>

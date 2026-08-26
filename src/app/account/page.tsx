@@ -24,9 +24,9 @@ export default async function AccountPage({
 
       <section className="flex flex-col gap-4">
         <h2 className="text-2xl font-semibold">Змінити пароль</h2>
-        {error && <p className="text-sm text-red-500">{ERROR_MESSAGES[error]}</p>}
+        {error && <p className="text-base text-red-500">{ERROR_MESSAGES[error]}</p>}
         {success && (
-          <p className="text-sm text-green-600 dark:text-green-500">
+          <p className="text-base text-green-600 dark:text-green-500">
             Пароль змінено.
           </p>
         )}
@@ -37,7 +37,7 @@ export default async function AccountPage({
             placeholder="Поточний пароль"
             required
             autoComplete="current-password"
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
           />
           <input
             type="password"
@@ -46,11 +46,11 @@ export default async function AccountPage({
             required
             minLength={8}
             autoComplete="new-password"
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
           />
           <SubmitButton
             pendingText="Змінюю…"
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-base font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             Змінити пароль
           </SubmitButton>
@@ -68,7 +68,7 @@ export default async function AccountPage({
         <form action={deleteAccount}>
           <SubmitButton
             pendingText="Видаляю…"
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+            className="rounded-md bg-red-600 px-3 py-2 text-base font-medium text-white hover:bg-red-700"
           >
             Видалити акаунт назавжди
           </SubmitButton>

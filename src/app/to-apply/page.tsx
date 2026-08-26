@@ -50,7 +50,7 @@ export default async function ToApplyPage({
           <Link
             href="/to-apply"
             className={
-              "rounded-full px-3 py-1 text-sm font-medium " +
+              "rounded-full px-3 py-1 text-base font-medium " +
               (!cvFilter
                 ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                 : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
@@ -63,7 +63,7 @@ export default async function ToApplyPage({
               key={profile.id}
               href={`/to-apply?cv=${profile.id}`}
               className={
-                "rounded-full px-3 py-1 text-sm font-medium " +
+                "rounded-full px-3 py-1 text-base font-medium " +
                 (cvFilter === profile.id
                   ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                   : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
@@ -76,7 +76,7 @@ export default async function ToApplyPage({
       )}
 
       {matches.length === 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-base text-zinc-500">
           Поки що немає жодного матчу з достатнім відсотком збігу. Запусти
           пошук і порахуй % збігу на сторінці налаштувань.
         </p>
@@ -102,7 +102,7 @@ export default async function ToApplyPage({
                       >
                         {match.vacancy.title}
                       </a>
-                      <div className="mt-1 text-xs text-zinc-500">
+                      <div className="mt-1 text-sm text-zinc-500">
                         {match.score}%
                       </div>
                     </div>
@@ -111,7 +111,7 @@ export default async function ToApplyPage({
                         <input type="hidden" name="id" value={match.id} />
                         <SubmitButton
                           pendingText="…"
-                          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                          className="rounded-md bg-zinc-900 px-3 py-1.5 text-base font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                         >
                           Подався
                         </SubmitButton>
@@ -120,7 +120,7 @@ export default async function ToApplyPage({
                         <input type="hidden" name="id" value={match.id} />
                         <SubmitButton
                           pendingText="…"
-                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-base font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                         >
                           Видалити
                         </SubmitButton>
@@ -129,7 +129,7 @@ export default async function ToApplyPage({
                   </div>
 
                   {match.coverLetter && (
-                    <p className="mt-3 whitespace-pre-wrap rounded-md bg-zinc-50 p-3 text-sm text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    <p className="mt-3 whitespace-pre-wrap rounded-md bg-zinc-50 p-3 text-base text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
                       {match.coverLetter}
                     </p>
                   )}

@@ -31,7 +31,7 @@ export default async function LoginPage({
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-10 sm:py-16">
       <h1 className="text-4xl font-semibold">Увійти</h1>
       {error && (
-        <p className="text-sm text-red-500">Невірний email або пароль.</p>
+        <p className="text-base text-red-500">Невірний email або пароль.</p>
       )}
       <form action={login} className="flex flex-col gap-3">
         <input
@@ -40,7 +40,7 @@ export default async function LoginPage({
           placeholder="Email"
           required
           autoComplete="email"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
         />
         <input
           type="password"
@@ -48,16 +48,16 @@ export default async function LoginPage({
           placeholder="Пароль"
           required
           autoComplete="current-password"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-md border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-900"
         />
         <SubmitButton
           pendingText="Входжу…"
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="rounded-md bg-zinc-900 px-3 py-2 text-base font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           Увійти
         </SubmitButton>
       </form>
-      <p className="text-sm text-zinc-500">
+      <p className="text-base text-zinc-500">
         Немає акаунту?{" "}
         <Link href="/register" className="underline">
           Зареєструватися

@@ -102,11 +102,11 @@ export default async function VacanciesPage({
       <h1 className="text-4xl font-semibold">Знайдені вакансії</h1>
 
       {!hasAnyProfile ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-base text-zinc-500">
           Спочатку додай CV-профіль та ключові слова на сторінці налаштувань.
         </p>
       ) : !hasAnyVacancy ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-base text-zinc-500">
           Ще нічого не знайдено. Додай ключове слово під CV та натисни
           &laquo;Запустити пошук зараз&raquo; на сторінці налаштувань.
         </p>
@@ -117,7 +117,7 @@ export default async function VacanciesPage({
               {profile.label} ({vacancies.length})
             </h2>
             {vacancies.length === 0 ? (
-              <p className="text-sm text-zinc-500">
+              <p className="text-base text-zinc-500">
                 Для цього CV ще нічого не знайдено.
               </p>
             ) : (
@@ -150,7 +150,7 @@ export default async function VacanciesPage({
                         {score !== undefined ? (
                           <span
                             className={
-                              "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium " +
+                              "shrink-0 rounded-full px-2 py-0.5 text-sm font-medium " +
                               (score >= 60
                                 ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                                 : score >= 40
@@ -161,16 +161,16 @@ export default async function VacanciesPage({
                             {score}% збіг
                           </span>
                         ) : (
-                          <span className="shrink-0 text-xs text-zinc-500">
+                          <span className="shrink-0 text-sm text-zinc-500">
                             не оцінено
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 text-xs text-zinc-500">
+                      <div className="mt-1 text-sm text-zinc-500">
                         {vacancy.source} · знайдено{" "}
                         {vacancy.foundAt.toLocaleString("uk-UA")}
                       </div>
-                      <p className="mt-2 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="mt-2 line-clamp-3 text-base text-zinc-600 dark:text-zinc-400">
                         {vacancy.rawText}
                       </p>
                       {matchId && (
@@ -179,7 +179,7 @@ export default async function VacanciesPage({
                             <input type="hidden" name="id" value={matchId} />
                             <SubmitButton
                               pendingText="…"
-                              className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                              className="rounded-md bg-zinc-900 px-3 py-1.5 text-base font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                             >
                               Подався
                             </SubmitButton>
@@ -188,7 +188,7 @@ export default async function VacanciesPage({
                             <input type="hidden" name="id" value={matchId} />
                             <SubmitButton
                               pendingText="…"
-                              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                              className="rounded-md border border-zinc-300 px-3 py-1.5 text-base font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                             >
                               Видалити
                             </SubmitButton>
