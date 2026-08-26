@@ -140,7 +140,7 @@ export function OtherSearchTrigger({
                 <button
                   type="button"
                   onClick={cancel}
-                  className="text-xs text-zinc-500 underline hover:text-zinc-300"
+                  className="text-sm text-zinc-500 underline hover:text-zinc-300"
                 >
                   Скасувати
                 </button>

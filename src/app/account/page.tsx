@@ -18,12 +18,12 @@ export default async function AccountPage({
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="text-2xl font-semibold">Акаунт</h1>
+        <h1 className="text-4xl font-semibold">Акаунт</h1>
         <p className="mt-1 text-sm text-zinc-500">{session?.user?.email}</p>
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Змінити пароль</h2>
+        <h2 className="text-2xl font-semibold">Змінити пароль</h2>
         {error && <p className="text-sm text-red-500">{ERROR_MESSAGES[error]}</p>}
         {success && (
           <p className="text-sm text-green-600 dark:text-green-500">
@@ -58,10 +58,10 @@ export default async function AccountPage({
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-red-600 dark:text-red-500">
+        <h2 className="text-2xl font-semibold text-red-600 dark:text-red-500">
           Видалити акаунт
         </h2>
-        <p className="text-sm text-zinc-500">
+        <p className="text-base text-zinc-500">
           Видалить твій акаунт і всі твої CV-профілі, ключові слова та
           матчі. Дію неможливо скасувати.
         </p>

@@ -17,13 +17,13 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Огляд</h1>
+      <h1 className="text-4xl font-semibold">Огляд</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Вакансій знайдено" value={vacancyCount} />
         <StatCard label="CV-профілів" value={cvProfileCount} />
         <StatCard label="До подачі" value={toApplyCount} />
       </div>
-      <p className="text-sm text-zinc-500">
+      <p className="text-base text-zinc-500">
         <Link href="/vacancies" className="underline">
           Вакансії
         </Link>{" "}

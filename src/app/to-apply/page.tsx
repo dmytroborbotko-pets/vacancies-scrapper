@@ -43,14 +43,14 @@ export default async function ToApplyPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">До подачі</h1>
+      <h1 className="text-4xl font-semibold">До подачі</h1>
 
       {cvProfiles.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <Link
             href="/to-apply"
             className={
-              "rounded-full px-3 py-1 text-xs font-medium " +
+              "rounded-full px-3 py-1 text-sm font-medium " +
               (!cvFilter
                 ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                 : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
@@ -63,7 +63,7 @@ export default async function ToApplyPage({
               key={profile.id}
               href={`/to-apply?cv=${profile.id}`}
               className={
-                "rounded-full px-3 py-1 text-xs font-medium " +
+                "rounded-full px-3 py-1 text-sm font-medium " +
                 (cvFilter === profile.id
                   ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                   : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
@@ -83,7 +83,7 @@ export default async function ToApplyPage({
       ) : (
         Array.from(groups.values()).map(({ profile, matches }) => (
           <section key={profile.id} className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-zinc-700 dark:text-zinc-300">
+            <h2 className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
               {profile.label} ({matches.length})
             </h2>
             <ul className="flex flex-col gap-4">
@@ -111,7 +111,7 @@ export default async function ToApplyPage({
                         <input type="hidden" name="id" value={match.id} />
                         <SubmitButton
                           pendingText="…"
-                          className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                         >
                           Подався
                         </SubmitButton>
@@ -120,7 +120,7 @@ export default async function ToApplyPage({
                         <input type="hidden" name="id" value={match.id} />
                         <SubmitButton
                           pendingText="…"
-                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                         >
                           Видалити
                         </SubmitButton>

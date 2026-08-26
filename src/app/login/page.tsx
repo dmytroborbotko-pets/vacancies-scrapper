@@ -29,7 +29,7 @@ export default async function LoginPage({
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-10 sm:py-16">
-      <h1 className="text-2xl font-semibold">Увійти</h1>
+      <h1 className="text-4xl font-semibold">Увійти</h1>
       {error && (
         <p className="text-sm text-red-500">Невірний email або пароль.</p>
       )}

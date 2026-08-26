@@ -49,7 +49,7 @@ export default async function RegisterPage({
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6 py-10 sm:py-16">
-      <h1 className="text-2xl font-semibold">Реєстрація</h1>
+      <h1 className="text-4xl font-semibold">Реєстрація</h1>
       {error && (
         <p className="text-sm text-red-500">
           {ERROR_MESSAGES[error] ?? "Щось пішло не так."}

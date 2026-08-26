@@ -99,7 +99,7 @@ export default async function VacanciesPage({
 
   return (
     <div className="flex flex-col gap-10">
-      <h1 className="text-2xl font-semibold">Знайдені вакансії</h1>
+      <h1 className="text-4xl font-semibold">Знайдені вакансії</h1>
 
       {!hasAnyProfile ? (
         <p className="text-sm text-zinc-500">
@@ -113,7 +113,7 @@ export default async function VacanciesPage({
       ) : (
         groups.map(({ profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId }) => (
           <section key={profile.id} className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-2xl font-semibold">
               {profile.label} ({vacancies.length})
             </h2>
             {vacancies.length === 0 ? (
@@ -179,7 +179,7 @@ export default async function VacanciesPage({
                             <input type="hidden" name="id" value={matchId} />
                             <SubmitButton
                               pendingText="…"
-                              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+                              className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                             >
                               Подався
                             </SubmitButton>
@@ -188,7 +188,7 @@ export default async function VacanciesPage({
                             <input type="hidden" name="id" value={matchId} />
                             <SubmitButton
                               pendingText="…"
-                              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                             >
                               Видалити
                             </SubmitButton>

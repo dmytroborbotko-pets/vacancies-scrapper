@@ -36,7 +36,7 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold">Налаштування</h1>
+        <h1 className="text-4xl font-semibold">Налаштування</h1>
         <div className="flex flex-wrap gap-2">
           <RunTaskButton
             href="/api/run-search"
@@ -48,7 +48,7 @@ export default async function SettingsPage() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Додати CV-профіль</h2>
+        <h2 className="text-2xl font-semibold">Додати CV-профіль</h2>
         <form action={uploadCvProfile} className="flex flex-col gap-2 sm:flex-row">
           <input
             type="text"
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
       </section>
 
       <section className="flex flex-col gap-6">
-        <h2 className="text-xl font-semibold">CV-профілі та їх ключові слова</h2>
+        <h2 className="text-2xl font-semibold">CV-профілі та їх ключові слова</h2>
 
         {cvProfiles.length === 0 ? (
           <p className="text-sm text-zinc-500">
@@ -105,7 +105,7 @@ export default async function SettingsPage() {
                     <SubmitButton
                       pendingText="…"
                       className={
-                        "rounded-full px-3 py-1 text-xs font-medium " +
+                        "rounded-full px-3 py-1 text-sm font-medium " +
                         (profile.otherModeEnabled
                           ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
                           : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
@@ -117,14 +117,14 @@ export default async function SettingsPage() {
                   {profile.otherModeEnabled && (
                     <OtherSearchTrigger
                       cvProfileId={profile.id}
-                      className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                      className="rounded-full border border-zinc-300 px-3 py-1 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
                     />
                   )}
                   <form action={deleteCvProfile}>
                     <input type="hidden" name="id" value={profile.id} />
                     <SubmitButton
                       pendingText="Видаляю…"
-                      className="text-xs text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
+                      className="text-sm text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
                     >
                       Видалити CV
                     </SubmitButton>
@@ -252,7 +252,7 @@ export default async function SettingsPage() {
                           <SubmitButton
                             pendingText="…"
                             disabled={profile.otherModeEnabled}
-                            className="text-xs text-zinc-500 underline hover:text-zinc-900 disabled:hover:no-underline dark:hover:text-zinc-100"
+                            className="text-sm text-zinc-500 underline hover:text-zinc-900 disabled:hover:no-underline dark:hover:text-zinc-100"
                           >
                             {config.active ? "Вимкнути" : "Увімкнути"}
                           </SubmitButton>
@@ -262,7 +262,7 @@ export default async function SettingsPage() {
                           <SubmitButton
                             pendingText="Видаляю…"
                             disabled={profile.otherModeEnabled}
-                            className="text-xs text-red-500 underline hover:text-red-700 disabled:hover:no-underline dark:hover:text-red-400"
+                            className="text-sm text-red-500 underline hover:text-red-700 disabled:hover:no-underline dark:hover:text-red-400"
                           >
                             Видалити
                           </SubmitButton>
