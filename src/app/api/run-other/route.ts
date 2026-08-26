@@ -4,10 +4,11 @@ import { ingestSearchConfig, ingestOtherSearchConfig } from "@/lib/ingest";
 import { scoreProfilesForUser } from "@/lib/scoring";
 
 // DJINNI + DOU (22 keyword terms each, DOU rate-limited to one request per
-// ~2s) + the OTHER web-search leg can together run close to 300s. Ask for
-// more headroom; Vercel silently caps this to whatever the plan allows
-// (300s on Hobby), so it's a no-op there but real slack on Pro/Enterprise.
-export const maxDuration = 800;
+// ~2s) + the OTHER web-search leg can together run close to 300s. 300 is
+// the hard ceiling on the Hobby plan — Vercel rejects the deploy outright
+// (not a silent cap) if this exceeds what the plan allows, so this can't
+// just be bumped for headroom without upgrading the plan first.
+export const maxDuration = 300;
 
 type StreamEvent =
   | { type: "status"; message: string }
