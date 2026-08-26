@@ -41,14 +41,8 @@ export default async function SettingsPage() {
           <RunTaskButton
             href="/api/run-search"
             label="Запустити пошук зараз (усі CV)"
-            runningLabel="Триває пошук вакансій…"
+            runningLabel="Шукаю та рахую % збігу…"
             className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          />
-          <RunTaskButton
-            href="/api/run-matching"
-            label="Порахувати % збігу"
-            runningLabel="Рахуємо % збігу…"
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
           />
         </div>
       </div>

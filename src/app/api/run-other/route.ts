@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { ingestSearchConfig, ingestOtherSearchConfig } from "@/lib/ingest";
+import { scoreProfilesForUser } from "@/lib/scoring";
 
 // DJINNI + DOU (22 keyword terms each, DOU rate-limited to one request per
 // ~2s) + the OTHER web-search leg can together run close to 300s. Ask for
@@ -79,6 +80,9 @@ export async function GET(request: Request) {
             totalCreated += result.created;
           }
         }
+
+        send({ type: "status", message: "Рахую % збігу…" });
+        await scoreProfilesForUser(userId);
 
         send({ type: "done", found: totalFound, created: totalCreated });
       } catch (error) {

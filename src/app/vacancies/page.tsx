@@ -6,6 +6,8 @@ import { markApplied, deleteMatch } from "@/app/to-apply/actions";
 import { SubmitButton } from "@/components/submit-button";
 
 const PAGE_SIZE = 20;
+// Vacancies scored below this are just noise — not worth ever showing.
+const MIN_SCORE_THRESHOLD = 30;
 
 // Builds an href for a page link within one CV's section, preserving every
 // other CV section's own page param untouched.
@@ -62,8 +64,12 @@ export default async function VacanciesPage({
       matchIdByVacancyId.set(match.vacancyId, match.id);
       // Dismissed (deleted from "До подачі") and applied ("Подався")
       // vacancies are done with — they belong on their own pages, not back
-      // in the general list.
-      if (match.status === "DISMISSED" || match.status === "APPLIED") {
+      // in the general list. Low-scoring ones just aren't worth showing.
+      if (
+        match.status === "DISMISSED" ||
+        match.status === "APPLIED" ||
+        match.score < MIN_SCORE_THRESHOLD
+      ) {
         hiddenVacancyIds.add(match.vacancyId);
       }
     }
