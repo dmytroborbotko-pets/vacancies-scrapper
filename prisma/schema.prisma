@@ -13,6 +13,7 @@ datasource db {
 enum Source {
   DJINNI
   DOU
+  OTHER
 }
 
 enum MatchStatus {
@@ -43,6 +44,10 @@ model CvProfile {
   fileData      Bytes
   extractedText String
   createdAt     DateTime @default(now())
+  // When true, the app runs a broad "everywhere" search for defense/
+  // military-tech vacancies with a reservation instead of the profile's own
+  // keyword configs (see SearchConfig.managed).
+  otherModeEnabled Boolean @default(false)
 
   searchConfigs SearchConfig[]
   matches       Match[]
@@ -64,6 +69,11 @@ model SearchConfig {
   // vacancies that just mention the topic without actually offering it.
   requireReservation Boolean   @default(false)
   active             Boolean   @default(true)
+  // System-generated config (source=DJINNI/DOU/OTHER, canonical defense
+  // keywords) created automatically when a CV's otherModeEnabled turns on.
+  // Hidden from the manual keyword-config UI and excluded from the manual
+  // "run search now" trigger — only the daily cron scans it.
+  managed            Boolean   @default(false)
   createdAt          DateTime  @default(now())
   cvProfile          CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
   cvProfileId        String

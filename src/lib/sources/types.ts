@@ -1,5 +1,5 @@
 export interface FetchedVacancy {
-  source: "DJINNI" | "DOU";
+  source: "DJINNI" | "DOU" | "OTHER";
   sourceUrl: string;
   title: string;
   company: string | null;

@@ -7,6 +7,7 @@ import {
   deleteSearchConfig,
   deleteCvProfile,
   uploadCvProfile,
+  toggleOtherMode,
 } from "./actions";
 
 type CvProfileWithConfigs = CvProfile & { searchConfigs: SearchConfig[] };
@@ -24,7 +25,9 @@ export default async function SettingsPage() {
   const cvProfiles: CvProfileWithConfigs[] = await prisma.cvProfile.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    include: { searchConfigs: { orderBy: { createdAt: "desc" } } },
+    include: {
+      searchConfigs: { where: { managed: false }, orderBy: { createdAt: "desc" } },
+    },
   });
 
   return (
@@ -94,17 +97,51 @@ export default async function SettingsPage() {
                     {profile.extractedText}
                   </div>
                 </div>
-                <form action={deleteCvProfile} className="shrink-0">
-                  <input type="hidden" name="id" value={profile.id} />
-                  <button
-                    type="submit"
-                    className="text-xs text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
-                  >
-                    Видалити CV
-                  </button>
-                </form>
+                <div className="flex shrink-0 items-center gap-3">
+                  <form action={toggleOtherMode}>
+                    <input type="hidden" name="cvProfileId" value={profile.id} />
+                    <input
+                      type="hidden"
+                      name="next"
+                      value={(!profile.otherModeEnabled).toString()}
+                    />
+                    <button
+                      type="submit"
+                      className={
+                        "rounded-full px-3 py-1 text-xs font-medium " +
+                        (profile.otherModeEnabled
+                          ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
+                          : "border border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900")
+                      }
+                    >
+                      Режим «Інші»: {profile.otherModeEnabled ? "увімкнено" : "вимкнено"}
+                    </button>
+                  </form>
+                  <form action={deleteCvProfile}>
+                    <input type="hidden" name="id" value={profile.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
+                    >
+                      Видалити CV
+                    </button>
+                  </form>
+                </div>
               </div>
 
+              <p className="mt-2 text-xs text-zinc-500">
+                «Інші»: щоденний пошук defense/military-tech вакансій із
+                бронюванням будь-де в інтернеті (включно з Djinni й DOU),
+                незалежно від ключових слів нижче. Вмикання деактивує
+                ручні конфігурації Djinni/DOU для цього CV.
+              </p>
+
+              {profile.otherModeEnabled ? (
+                <p className="mt-4 rounded-md border border-zinc-200 p-3 text-sm text-zinc-500 dark:border-zinc-800">
+                  Ручні ключові слова вимкнено, поки активний режим «Інші».
+                  Вимкни режим вище, щоб знову керувати Djinni/DOU вручну.
+                </p>
+              ) : (
               <form action={addSearchConfig} className="mt-4 flex flex-col gap-2">
                 <input type="hidden" name="cvProfileId" value={profile.id} />
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -182,6 +219,7 @@ export default async function SettingsPage() {
                   &laquo;бронювання&raquo;)
                 </label>
               </form>
+              )}
 
               {profile.searchConfigs.length === 0 ? (
                 <p className="mt-3 text-sm text-zinc-500">
@@ -210,7 +248,8 @@ export default async function SettingsPage() {
                           />
                           <button
                             type="submit"
-                            className="text-xs text-zinc-500 underline hover:text-zinc-900 dark:hover:text-zinc-100"
+                            disabled={profile.otherModeEnabled}
+                            className="text-xs text-zinc-500 underline hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline dark:hover:text-zinc-100"
                           >
                             {config.active ? "Вимкнути" : "Увімкнути"}
                           </button>
@@ -219,7 +258,8 @@ export default async function SettingsPage() {
                           <input type="hidden" name="id" value={config.id} />
                           <button
                             type="submit"
-                            className="text-xs text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
+                            disabled={profile.otherModeEnabled}
+                            className="text-xs text-red-500 underline hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline dark:hover:text-red-400"
                           >
                             Видалити
                           </button>

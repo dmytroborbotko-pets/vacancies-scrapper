@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { extractTextFromFile } from "@/lib/cv";
 import { requireUserId } from "@/lib/session";
+import { DEFENSE_KEYWORDS } from "@/lib/defense-keywords";
 
 export async function addSearchConfig(formData: FormData) {
   const userId = await requireUserId();
@@ -68,6 +69,69 @@ export async function deleteSearchConfig(formData: FormData) {
   });
   revalidatePath("/settings");
   revalidatePath("/vacancies");
+}
+
+const MANAGED_SOURCES = ["DJINNI", "DOU", "OTHER"] as const;
+
+// "Інші" mode: turning it on deactivates the CV's own manual keyword
+// configs and ensures three system-managed configs exist (one per source)
+// with the canonical defense/military-tech keywords, always requiring a
+// reservation. Turning it off just deactivates the managed configs — the
+// user's manual configs stay deactivated too, and can be re-enabled by hand.
+export async function toggleOtherMode(formData: FormData) {
+  const userId = await requireUserId();
+  const cvProfileId = String(formData.get("cvProfileId") ?? "");
+  const next = formData.get("next") === "true";
+  if (!cvProfileId) return;
+
+  const cvProfile = await prisma.cvProfile.findFirst({
+    where: { id: cvProfileId, userId },
+    select: { id: true },
+  });
+  if (!cvProfile) return;
+
+  if (next) {
+    await prisma.searchConfig.updateMany({
+      where: { cvProfileId, managed: false },
+      data: { active: false },
+    });
+
+    for (const source of MANAGED_SOURCES) {
+      const existing = await prisma.searchConfig.findFirst({
+        where: { cvProfileId, managed: true, source },
+        select: { id: true },
+      });
+      if (existing) {
+        await prisma.searchConfig.update({
+          where: { id: existing.id },
+          data: { active: true },
+        });
+      } else {
+        await prisma.searchConfig.create({
+          data: {
+            cvProfileId,
+            source,
+            managed: true,
+            active: true,
+            keywords: DEFENSE_KEYWORDS,
+            requireReservation: true,
+          },
+        });
+      }
+    }
+  } else {
+    await prisma.searchConfig.updateMany({
+      where: { cvProfileId, managed: true },
+      data: { active: false },
+    });
+  }
+
+  await prisma.cvProfile.update({
+    where: { id: cvProfileId },
+    data: { otherModeEnabled: next },
+  });
+
+  revalidatePath("/settings");
 }
 
 export async function uploadCvProfile(formData: FormData) {
