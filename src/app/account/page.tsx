@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { changePassword, deleteAccount } from "./actions";
+import { SubmitButton } from "@/components/submit-button";
 
 const ERROR_MESSAGES: Record<string, string> = {
   "wrong-password": "Поточний пароль невірний.",
@@ -47,12 +48,12 @@ export default async function AccountPage({
             autoComplete="new-password"
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingText="Змінюю…"
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             Змінити пароль
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -65,12 +66,12 @@ export default async function AccountPage({
           матчі. Дію неможливо скасувати.
         </p>
         <form action={deleteAccount}>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingText="Видаляю…"
             className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
             Видалити акаунт назавжди
-          </button>
+          </SubmitButton>
         </form>
       </section>
     </div>

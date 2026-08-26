@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { signIn } from "@/auth";
+import { SubmitButton } from "@/components/submit-button";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -72,12 +73,12 @@ export default async function RegisterPage({
           autoComplete="new-password"
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-        <button
-          type="submit"
+        <SubmitButton
+          pendingText="Реєструю…"
           className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           Зареєструватися
-        </button>
+        </SubmitButton>
       </form>
       <p className="text-sm text-zinc-500">
         Вже є акаунт?{" "}

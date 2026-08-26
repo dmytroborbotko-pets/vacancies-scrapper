@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { Match, Vacancy, CvProfile } from "@/generated/prisma/client";
 import { requireUserId } from "@/lib/session";
 import { markApplied, deleteMatch } from "./actions";
+import { SubmitButton } from "@/components/submit-button";
 
 type MatchWithRelations = Match & { vacancy: Vacancy; cvProfile: CvProfile };
 
@@ -108,21 +109,21 @@ export default async function ToApplyPage({
                     <div className="flex shrink-0 gap-3">
                       <form action={markApplied}>
                         <input type="hidden" name="id" value={match.id} />
-                        <button
-                          type="submit"
+                        <SubmitButton
+                          pendingText="…"
                           className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                         >
                           Подався
-                        </button>
+                        </SubmitButton>
                       </form>
                       <form action={deleteMatch}>
                         <input type="hidden" name="id" value={match.id} />
-                        <button
-                          type="submit"
+                        <SubmitButton
+                          pendingText="…"
                           className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                         >
                           Видалити
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   </div>

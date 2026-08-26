@@ -76,10 +76,18 @@ export default async function VacanciesPage() {
               <ul className="flex flex-col gap-4">
                 {vacancies.map((vacancy) => {
                   const score = scoreByVacancyId.get(vacancy.id);
+                  const scoreBorder =
+                    score === undefined
+                      ? "border-zinc-200 dark:border-zinc-800"
+                      : score >= 60
+                        ? "border-green-300 dark:border-green-800"
+                        : score >= 40
+                          ? "border-yellow-300 dark:border-yellow-800"
+                          : "border-zinc-200 dark:border-zinc-800";
                   return (
                     <li
                       key={vacancy.id}
-                      className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+                      className={`rounded-lg border-l-4 border p-4 ${scoreBorder}`}
                     >
                       <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <a

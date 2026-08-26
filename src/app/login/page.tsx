@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
+import { SubmitButton } from "@/components/submit-button";
 
 async function login(formData: FormData) {
   "use server";
@@ -49,12 +50,12 @@ export default async function LoginPage({
           autoComplete="current-password"
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-        <button
-          type="submit"
+        <SubmitButton
+          pendingText="Входжу…"
           className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
         >
           Увійти
-        </button>
+        </SubmitButton>
       </form>
       <p className="text-sm text-zinc-500">
         Немає акаунту?{" "}

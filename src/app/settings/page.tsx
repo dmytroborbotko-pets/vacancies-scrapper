@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { CvProfile, SearchConfig } from "@/generated/prisma/client";
 import { requireUserId } from "@/lib/session";
+import { RunTaskButton } from "@/components/run-task-button";
+import { SubmitButton } from "@/components/submit-button";
 import {
   addSearchConfig,
   toggleSearchConfig,
@@ -35,18 +37,18 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Налаштування</h1>
         <div className="flex flex-wrap gap-2">
-          <a
+          <RunTaskButton
             href="/api/run-search"
+            label="Запустити пошук зараз (усі CV)"
+            runningLabel="Триває пошук вакансій…"
             className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            Запустити пошук зараз (усі CV)
-          </a>
-          <a
+          />
+          <RunTaskButton
             href="/api/run-matching"
+            label="Порахувати % збігу"
+            runningLabel="Рахуємо % збігу…"
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-          >
-            Порахувати % збігу
-          </a>
+          />
         </div>
       </div>
 
@@ -67,12 +69,12 @@ export default async function SettingsPage() {
             required
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-2 file:py-1 sm:flex-1 dark:border-zinc-700 dark:bg-zinc-900 dark:file:bg-zinc-800"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingText="Завантажую…"
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             Завантажити
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -105,8 +107,8 @@ export default async function SettingsPage() {
                       name="next"
                       value={(!profile.otherModeEnabled).toString()}
                     />
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingText="…"
                       className={
                         "rounded-full px-3 py-1 text-xs font-medium " +
                         (profile.otherModeEnabled
@@ -115,16 +117,16 @@ export default async function SettingsPage() {
                       }
                     >
                       Режим «Інші»: {profile.otherModeEnabled ? "увімкнено" : "вимкнено"}
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={deleteCvProfile}>
                     <input type="hidden" name="id" value={profile.id} />
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingText="Видаляю…"
                       className="text-xs text-red-500 underline hover:text-red-700 dark:hover:text-red-400"
                     >
                       Видалити CV
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               </div>
@@ -152,12 +154,12 @@ export default async function SettingsPage() {
                     required
                     className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm sm:flex-1 dark:border-zinc-700 dark:bg-zinc-900"
                   />
-                  <button
-                    type="submit"
+                  <SubmitButton
+                    pendingText="Додаю…"
                     className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
                   >
                     Додати
-                  </button>
+                  </SubmitButton>
                 </div>
                 <p className="text-xs text-zinc-500">
                   Через кому — вакансія підходить, якщо в ній є хоча б одне зі
@@ -246,23 +248,23 @@ export default async function SettingsPage() {
                             name="nextActive"
                             value={(!config.active).toString()}
                           />
-                          <button
-                            type="submit"
+                          <SubmitButton
+                            pendingText="…"
                             disabled={profile.otherModeEnabled}
-                            className="text-xs text-zinc-500 underline hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline dark:hover:text-zinc-100"
+                            className="text-xs text-zinc-500 underline hover:text-zinc-900 disabled:hover:no-underline dark:hover:text-zinc-100"
                           >
                             {config.active ? "Вимкнути" : "Увімкнути"}
-                          </button>
+                          </SubmitButton>
                         </form>
                         <form action={deleteSearchConfig}>
                           <input type="hidden" name="id" value={config.id} />
-                          <button
-                            type="submit"
+                          <SubmitButton
+                            pendingText="Видаляю…"
                             disabled={profile.otherModeEnabled}
-                            className="text-xs text-red-500 underline hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:no-underline dark:hover:text-red-400"
+                            className="text-xs text-red-500 underline hover:text-red-700 disabled:hover:no-underline dark:hover:text-red-400"
                           >
                             Видалити
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </li>

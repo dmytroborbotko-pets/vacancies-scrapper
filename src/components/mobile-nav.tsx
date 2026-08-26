@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { SubmitButton } from "@/components/submit-button";
 
 type NavItem = { href: string; label: string };
 
@@ -58,12 +59,12 @@ export function MobileNav({
                 {userEmail}
               </Link>
               <form action={logoutAction}>
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingText="Виходжу…"
                   className="text-zinc-500 underline hover:text-zinc-900 dark:hover:text-zinc-100"
                 >
                   Вийти
-                </button>
+                </SubmitButton>
               </form>
             </div>
           </div>

@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { MobileNav } from "@/components/mobile-nav";
+import { TaskStatusProvider } from "@/components/task-status";
+import { SubmitButton } from "@/components/submit-button";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -67,12 +69,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                     {session.user.email}
                   </Link>
                   <form action={logout}>
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingText="Виходжу…"
                       className="text-zinc-500 underline hover:text-zinc-900 dark:hover:text-zinc-100"
                     >
                       Вийти
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
                 <div className="ml-auto md:hidden">
@@ -86,9 +88,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             )}
           </nav>
         </header>
-        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
-          {children}
-        </main>
+        <TaskStatusProvider>
+          <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+            {children}
+          </main>
+        </TaskStatusProvider>
       </body>
     </html>
   );
