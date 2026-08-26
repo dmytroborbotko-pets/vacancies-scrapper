@@ -10,8 +10,6 @@ const SEARCH_SYSTEM_PROMPT = `Do NOT use code execution or write/run scripts of 
 
 You search the public web for current job vacancies in Ukraine's defense and military-tech sector that explicitly offer a reservation from mobilization ("бронювання").
 
-Narrate what you're doing and finding in plain text as you go (e.g. "Searching for X...", "Found a promising posting at Y, checking it...") — this narration is shown live to the user, so keep it natural and informative rather than terse.
-
 Search broadly — job boards, company career pages, aggregators, anywhere — not limited to any single site. For each distinct vacancy you find, report:
 - its title
 - the direct URL to the posting
@@ -38,18 +36,17 @@ const CandidateSchema = z.object({
 });
 
 // Broad, site-agnostic search for defense/military-tech vacancies with a
-// reservation. Two-step: (1) let Claude search the web (streamed so callers
-// can show live progress) and write up what it found in prose, (2) a
-// separate structured-output call extracts a clean list from that prose.
-// Filters out anything older than OTHER_MAX_VACANCY_AGE_DAYS or with an
-// undeterminable publish date.
+// reservation. Two-step: (1) let Claude search the web and write up what it
+// found in prose, (2) a separate structured-output call extracts a clean
+// list from that prose. Filters out anything older than
+// OTHER_MAX_VACANCY_AGE_DAYS or with an undeterminable publish date.
 //
 // Deliberately no `thinking` config: tested with adaptive thinking enabled,
 // it never surfaced usable text (thinking blocks came back empty — the
 // content is redacted/billed but not returned) while roughly quadrupling
 // input-token cost (~500K vs ~130K tokens/call) and making the model far
 // more likely to reach for an unrequested code_execution tool to batch
-// searches, which is both slower and defeats the point of live narration.
+// searches, which is both slower and less reliable.
 export async function fetchOtherVacancies(options: {
   maxResults: number;
   onText?: (delta: string) => void;

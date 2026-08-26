@@ -11,6 +11,9 @@ type StreamEvent =
   | { type: "error"; message: string };
 
 const BUFFER_CHAR_LIMIT = 4000;
+// Must match the status message run-other/route.ts sends when it starts the
+// OTHER (web-search) leg — that's the only phase with narration text to show.
+const WEB_SEARCH_STATUS = "Шукаю по всьому інтернету…";
 
 export function OtherSearchTrigger({
   cvProfileId,
@@ -27,6 +30,8 @@ export function OtherSearchTrigger({
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
+
+  const showNarration = status === WEB_SEARCH_STATUS;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -102,17 +107,21 @@ export function OtherSearchTrigger({
 
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="flex w-full max-w-2xl flex-col items-center gap-4 px-6 text-center">
+          <div
+            className={`flex w-full flex-col items-center gap-4 px-6 text-center ${showNarration ? "max-w-2xl" : "max-w-md"}`}
+          >
             {!done && !error && (
               <>
                 <Spinner className="h-8 w-8 text-zinc-300" />
                 <p className="text-sm font-medium text-zinc-300">{status}</p>
-                <div
-                  ref={scrollRef}
-                  className="h-64 w-full overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950/60 p-4 text-left font-mono text-sm leading-relaxed text-zinc-400 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  <span className="animate-pulse">{narration || "…"}</span>
-                </div>
+                {showNarration && (
+                  <div
+                    ref={scrollRef}
+                    className="h-64 w-full overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950/60 p-4 text-left font-mono text-sm leading-relaxed text-zinc-400 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  >
+                    <span className="animate-pulse">{narration || "…"}</span>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={cancel}

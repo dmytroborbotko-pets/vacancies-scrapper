@@ -11,10 +11,10 @@ type StreamEvent =
   | { type: "error"; message: string };
 
 // Per-CV manual trigger for "Інші" mode, streamed as NDJSON so the client
-// can show Claude's live search narration. Unlike the general manual "run
-// search now" button, this is the one place otherMode's managed configs
-// run on demand — gated by CV ownership + otherModeEnabled, same daily cap
-// as the cron path.
+// can show Claude's live search narration during the OTHER (web-search)
+// leg. Unlike the general manual "run search now" button, this is the one
+// place otherMode's managed configs run on demand — gated by CV ownership +
+// otherModeEnabled, same daily cap as the cron path.
 export async function GET(request: Request) {
   const userId = await requireUserId();
   const { searchParams } = new URL(request.url);
