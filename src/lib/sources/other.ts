@@ -49,7 +49,6 @@ const CandidateSchema = z.object({
 // searches, which is both slower and less reliable.
 export async function fetchOtherVacancies(options: {
   maxResults: number;
-  onText?: (delta: string) => void;
 }): Promise<FetchedVacancy[]> {
   if (options.maxResults <= 0) return [];
 
@@ -78,10 +77,6 @@ export async function fetchOtherVacancies(options: {
     // freezes forever with no explanation.
     { timeout: 120_000 },
   );
-
-  if (options.onText) {
-    searchStream.on("text", (delta) => options.onText!(delta));
-  }
 
   const searchResponse = await searchStream.finalMessage();
 

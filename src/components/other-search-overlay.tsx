@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 
@@ -11,11 +11,6 @@ type StreamEvent =
   | { type: "error"; message: string }
   | { type: "ping" };
 
-const BUFFER_CHAR_LIMIT = 4000;
-// Must match the status message run-other/route.ts sends when it starts the
-// OTHER (web-search) leg — that's the only phase with narration text to show.
-const WEB_SEARCH_STATUS = "Шукаю по всьому інтернету…";
-
 export function OtherSearchTrigger({
   cvProfileId,
   className,
@@ -25,27 +20,16 @@ export function OtherSearchTrigger({
 }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("Запускаю…");
-  const [narration, setNarration] = useState("");
   const [done, setDone] = useState<{ found: number; created: number } | "unknown" | null>(
     null,
   );
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
-
-  const showNarration = status === WEB_SEARCH_STATUS;
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [narration]);
 
   async function run() {
     setOpen(true);
     setStatus("Запускаю…");
-    setNarration("");
     setDone(null);
     setError(null);
 
@@ -76,8 +60,6 @@ export function OtherSearchTrigger({
           const event = JSON.parse(line) as StreamEvent;
           if (event.type === "status") {
             setStatus(event.message);
-          } else if (event.type === "text") {
-            setNarration((prev) => (prev + event.delta).slice(-BUFFER_CHAR_LIMIT));
           } else if (event.type === "done") {
             gotTerminalEvent = true;
             setDone({ found: event.found, created: event.created });
@@ -122,21 +104,11 @@ export function OtherSearchTrigger({
 
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div
-            className={`flex w-full flex-col items-center gap-4 px-6 text-center ${showNarration ? "max-w-2xl" : "max-w-md"}`}
-          >
+          <div className="flex w-full max-w-md flex-col items-center gap-4 px-6 text-center">
             {!done && !error && (
               <>
                 <Spinner className="h-8 w-8 text-zinc-300" />
                 <p className="text-base font-medium text-zinc-300">{status}</p>
-                {showNarration && (
-                  <div
-                    ref={scrollRef}
-                    className="h-64 w-full overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950/60 p-4 text-left font-mono text-sm leading-relaxed text-zinc-400 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                  >
-                    <span className="animate-pulse">{narration || "…"}</span>
-                  </div>
-                )}
                 <button
                   type="button"
                   onClick={cancel}

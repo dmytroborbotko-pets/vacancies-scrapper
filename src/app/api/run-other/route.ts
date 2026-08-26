@@ -12,7 +12,6 @@ export const maxDuration = 300;
 
 type StreamEvent =
   | { type: "status"; message: string }
-  | { type: "text"; delta: string }
   | { type: "done"; found: number; created: number }
   | { type: "error"; message: string }
   | { type: "ping" };
@@ -74,15 +73,13 @@ export async function GET(request: Request) {
             totalCreated += result.created;
           } else {
             send({ type: "status", message: "Шукаю по всьому інтернету…" });
-            const result = await ingestOtherSearchConfig(config, {
-              onText: (delta) => send({ type: "text", delta }),
-            });
+            const result = await ingestOtherSearchConfig(config);
             totalFound += result.found;
             totalCreated += result.created;
           }
         }
 
-        send({ type: "status", message: "Рахую % збігу…" });
+        send({ type: "status", message: "Оцінюю…" });
         await scoreProfilesForUser(userId);
 
         send({ type: "done", found: totalFound, created: totalCreated });

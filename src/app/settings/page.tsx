@@ -15,14 +15,6 @@ import {
 
 type CvProfileWithConfigs = CvProfile & { searchConfigs: SearchConfig[] };
 
-const EXP_LEVEL_OPTIONS = [
-  { value: "no_exp", label: "без досвіду" },
-  { value: "1y", label: "1 рік" },
-  { value: "2y", label: "2 роки" },
-  { value: "3y", label: "3 роки" },
-  { value: "5y,6y,7y,8y,9y,10y", label: "5+ років" },
-];
-
 export default async function SettingsPage() {
   const userId = await requireUserId();
   const cvProfiles: CvProfileWithConfigs[] = await prisma.cvProfile.findMany({
@@ -42,6 +34,7 @@ export default async function SettingsPage() {
             href="/api/run-search"
             label="Запустити пошук зараз (усі CV)"
             runningLabel="Шукаю та рахую % збігу…"
+            modal
             className="rounded-md bg-zinc-900 px-3 py-1.5 text-base font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
           />
         </div>
@@ -166,50 +159,23 @@ export default async function SettingsPage() {
                   Через кому — вакансія підходить, якщо в ній є хоча б одне зі
                   слів.
                 </p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                    <span className="text-zinc-500">
-                      Джерела (можна обидва):
-                    </span>
-                    <label className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        name="sources"
-                        value="DJINNI"
-                        defaultChecked
-                      />
-                      Djinni
-                    </label>
-                    <label className="flex items-center gap-1">
-                      <input type="checkbox" name="sources" value="DOU" />
-                      DOU (експериментально)
-                    </label>
-                  </div>
-                  <p className="text-sm text-amber-600 dark:text-amber-500">
-                    DOU: за повідомленнями спільноти сайт забороняє
-                    автоматизований збір даних без згоди адміністрації —
-                    вмикається на власний розсуд, використовується
-                    консервативно (мінімум запитів, без пагінації). Кожна
-                    вакансія позначена джерелом, звідки вона знайдена.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="text-sm text-zinc-500">
-                    Досвід, лише Djinni (необов&apos;язково):
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  <span className="text-zinc-500">
+                    Джерела (можна обидва):
                   </span>
-                  {EXP_LEVEL_OPTIONS.map((level) => (
-                    <label
-                      key={level.value}
-                      className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400"
-                    >
-                      <input
-                        type="checkbox"
-                        name="expLevels"
-                        value={level.value}
-                      />
-                      {level.label}
-                    </label>
-                  ))}
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      name="sources"
+                      value="DJINNI"
+                      defaultChecked
+                    />
+                    Djinni
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" name="sources" value="DOU" />
+                    DOU (експериментально)
+                  </label>
                 </div>
                 <label className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
                   <input

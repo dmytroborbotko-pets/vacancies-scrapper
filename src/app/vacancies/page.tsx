@@ -52,6 +52,10 @@ export default async function VacanciesPage({
   const groups = cvProfiles.map((profile) => {
     const vacancyById = new Map<string, Vacancy>();
     for (const config of profile.searchConfigs) {
+      // A vacancy found only through a config the user has since disabled
+      // (e.g. unchecked DOU) shouldn't keep cluttering the list — only
+      // configs still active surface their discoveries here.
+      if (!config.active) continue;
       for (const discovery of config.discoveries) {
         vacancyById.set(discovery.vacancy.id, discovery.vacancy);
       }

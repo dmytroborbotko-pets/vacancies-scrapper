@@ -133,17 +133,13 @@ function startOfTodayUTC(): Date {
 // the general manual "run search now" button.
 export async function ingestOtherSearchConfig(
   searchConfig: SearchConfig,
-  callbacks?: { onText?: (delta: string) => void },
 ): Promise<IngestResult> {
   const createdToday = await prisma.vacancy.count({
     where: { source: "OTHER", foundAt: { gte: startOfTodayUTC() } },
   });
   const remaining = OTHER_DAILY_VACANCY_CAP - createdToday;
 
-  const vacancies = await fetchOtherVacancies({
-    maxResults: remaining,
-    onText: callbacks?.onText,
-  });
+  const vacancies = await fetchOtherVacancies({ maxResults: remaining });
   const { found, created } = await persistDiscoveries(searchConfig, vacancies);
 
   return {
@@ -174,18 +170,25 @@ export async function runActiveSearches(): Promise<IngestResult[]> {
 }
 
 // Scoped to one user's own configs — used by the manual "Запустити пошук
-// зараз" button, which must never run another user's searches. Excludes
-// managed configs: "Інші" mode only ever scans via the daily cron.
+// зараз" button, which must never run another user's searches. Includes
+// managed configs too: a CV with "Інші" mode on has its manual configs
+// deactivated (see toggleOtherMode), so this naturally runs the normal
+// keyword search for CVs with "Інші" off and the managed DJINNI/DOU/OTHER
+// legs for CVs with it on — without scanning both for the same CV.
 export async function runActiveSearchesForUser(
   userId: string,
 ): Promise<IngestResult[]> {
   const configs = await prisma.searchConfig.findMany({
-    where: { active: true, managed: false, cvProfile: { userId } },
+    where: { active: true, cvProfile: { userId } },
   });
 
   const results: IngestResult[] = [];
   for (const config of configs) {
-    results.push(await ingestSearchConfig(config));
+    results.push(
+      config.source === "OTHER"
+        ? await ingestOtherSearchConfig(config)
+        : await ingestSearchConfig(config),
+    );
   }
   return results;
 }

@@ -24,7 +24,6 @@ export async function addSearchConfig(formData: FormData) {
   const sources = (
     selectedSources.length > 0 ? selectedSources : ["DJINNI"]
   ) as ("DJINNI" | "DOU")[];
-  const expLevels = formData.getAll("expLevels").map(String);
   const requireReservation = formData.get("requireReservation") === "true";
 
   // One row per selected source (not a single "both" row) — each source
@@ -35,10 +34,9 @@ export async function addSearchConfig(formData: FormData) {
       keywords,
       source,
       cvProfileId,
-      // expLevels is Djinni-only (no DOU equivalent); requireReservation
-      // applies to both — Djinni via editorial=reservation, DOU via
-      // ANDing the keyword "бронювання" into the search query.
-      expLevels: source === "DJINNI" && expLevels.length > 0 ? expLevels.join(",") : null,
+      // requireReservation applies to both — Djinni via
+      // editorial=reservation, DOU via ANDing the keyword "бронювання"
+      // into the search query.
       requireReservation,
     })),
   });
