@@ -23,6 +23,14 @@ enum MatchStatus {
   DISMISSED
 }
 
+// Finer-grained outcome of an already-applied match, independent of
+// MatchStatus — null means still just "Подався" with no outcome yet.
+enum MatchOutcome {
+  INTERVIEW
+  HIRED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -116,8 +124,9 @@ model Match {
   cvProfileId String
   score       Int
   coverLetter String?
-  status      MatchStatus @default(NEW)
-  createdAt   DateTime    @default(now())
+  status      MatchStatus   @default(NEW)
+  outcome     MatchOutcome?
+  createdAt   DateTime      @default(now())
 
   @@unique([vacancyId, cvProfileId])
 }

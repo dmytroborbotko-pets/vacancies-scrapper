@@ -27,12 +27,17 @@ export default async function VacanciesPage() {
       }
     }
     const scoreByVacancyId = new Map<string, number>();
-    const dismissedVacancyIds = new Set<string>();
+    const hiddenVacancyIds = new Set<string>();
     for (const match of profile.matches) {
       scoreByVacancyId.set(match.vacancyId, match.score);
-      if (match.status === "DISMISSED") dismissedVacancyIds.add(match.vacancyId);
+      // Dismissed (deleted from "До подачі") and applied ("Подався")
+      // vacancies are done with — they belong on their own pages, not back
+      // in the general list.
+      if (match.status === "DISMISSED" || match.status === "APPLIED") {
+        hiddenVacancyIds.add(match.vacancyId);
+      }
     }
-    for (const id of dismissedVacancyIds) vacancyById.delete(id);
+    for (const id of hiddenVacancyIds) vacancyById.delete(id);
 
     const vacancies = Array.from(vacancyById.values()).sort((a, b) => {
       const scoreA = scoreByVacancyId.get(a.id);
