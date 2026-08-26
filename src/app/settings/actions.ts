@@ -102,9 +102,12 @@ export async function toggleOtherMode(formData: FormData) {
         select: { id: true },
       });
       if (existing) {
+        // Also refresh keywords: DEFENSE_KEYWORDS can change between
+        // releases, and a pre-existing managed row would otherwise keep
+        // scanning with a stale list forever.
         await prisma.searchConfig.update({
           where: { id: existing.id },
-          data: { active: true },
+          data: { active: true, keywords: DEFENSE_KEYWORDS },
         });
       } else {
         await prisma.searchConfig.create({

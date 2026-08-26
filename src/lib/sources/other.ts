@@ -6,7 +6,11 @@ import { DEFENSE_KEYWORDS, OTHER_MAX_VACANCY_AGE_DAYS } from "@/lib/defense-keyw
 
 const client = new Anthropic();
 
-const SEARCH_SYSTEM_PROMPT = `You search the public web for current job vacancies in Ukraine's defense and military-tech sector that explicitly offer a reservation from mobilization ("бронювання").
+const SEARCH_SYSTEM_PROMPT = `Do NOT use code execution or write/run scripts of any kind. Call the web_search tool directly, one query at a time. This restriction is critical — violating it wastes budget and time.
+
+You search the public web for current job vacancies in Ukraine's defense and military-tech sector that explicitly offer a reservation from mobilization ("бронювання").
+
+Narrate what you're doing and finding in plain text as you go (e.g. "Searching for X...", "Found a promising posting at Y, checking it...") — this narration is shown live to the user, so keep it natural and informative rather than terse.
 
 Search broadly — job boards, company career pages, aggregators, anywhere — not limited to any single site. For each distinct vacancy you find, report:
 - its title
@@ -15,7 +19,7 @@ Search broadly — job boards, company career pages, aggregators, anywhere — n
 - a short excerpt describing the role and requirements
 - how many days ago it was posted, if the page states or implies this (e.g. "posted 3 days ago", an explicit date, "today", "this week")
 
-List every distinct vacancy you found, one per paragraph, with all of the above. If you cannot determine how many days ago a vacancy was posted, say so explicitly rather than guessing.`;
+Do 4-6 targeted searches, then write a final summary listing every distinct vacancy you found, one per paragraph, with all of the above — keep each paragraph brief, this is a list not an essay. If you cannot determine how many days ago a vacancy was posted, say so explicitly rather than guessing.`;
 
 const CandidateSchema = z.object({
   vacancies: z.array(
@@ -34,18 +38,27 @@ const CandidateSchema = z.object({
 });
 
 // Broad, site-agnostic search for defense/military-tech vacancies with a
-// reservation. Two-step: (1) let Claude search the web and write up what it
-// found in prose, (2) a separate structured-output call extracts a clean
-// list from that prose. Filters out anything older than
-// OTHER_MAX_VACANCY_AGE_DAYS or with an undeterminable publish date.
+// reservation. Two-step: (1) let Claude search the web (streamed so callers
+// can show live progress) and write up what it found in prose, (2) a
+// separate structured-output call extracts a clean list from that prose.
+// Filters out anything older than OTHER_MAX_VACANCY_AGE_DAYS or with an
+// undeterminable publish date.
+//
+// Deliberately no `thinking` config: tested with adaptive thinking enabled,
+// it never surfaced usable text (thinking blocks came back empty — the
+// content is redacted/billed but not returned) while roughly quadrupling
+// input-token cost (~500K vs ~130K tokens/call) and making the model far
+// more likely to reach for an unrequested code_execution tool to batch
+// searches, which is both slower and defeats the point of live narration.
 export async function fetchOtherVacancies(options: {
   maxResults: number;
+  onText?: (delta: string) => void;
 }): Promise<FetchedVacancy[]> {
   if (options.maxResults <= 0) return [];
 
-  const searchResponse = await client.messages.create({
+  const searchStream = client.messages.stream({
     model: "claude-sonnet-5",
-    max_tokens: 4096,
+    max_tokens: 8192,
     system: SEARCH_SYSTEM_PROMPT,
     messages: [
       {
@@ -57,10 +70,16 @@ export async function fetchOtherVacancies(options: {
       {
         type: "web_search_20260318",
         name: "web_search",
-        max_uses: 10,
+        max_uses: 8,
       },
     ],
   });
+
+  if (options.onText) {
+    searchStream.on("text", (delta) => options.onText!(delta));
+  }
+
+  const searchResponse = await searchStream.finalMessage();
 
   const textBlocks = searchResponse.content.filter(
     (block) => block.type === "text",
@@ -81,9 +100,14 @@ export async function fetchOtherVacancies(options: {
 
   if (!extraction.parsed_output) return [];
 
+  // Only exclude a candidate when Claude found a date AND it's stale — an
+  // undeterminable date passes through. In practice company career pages
+  // (the OTHER leg's main source, unlike Djinni/DOU's structured listings)
+  // almost never expose a "posted N days ago" marker, so treating
+  // "undeterminable" as "reject" was silently discarding every result.
   const fresh = extraction.parsed_output.vacancies.filter(
     (candidate) =>
-      candidate.publishedDaysAgo !== null &&
+      candidate.publishedDaysAgo === null ||
       candidate.publishedDaysAgo <= OTHER_MAX_VACANCY_AGE_DAYS,
   );
 

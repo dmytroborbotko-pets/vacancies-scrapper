@@ -94,7 +94,14 @@ function MatchList({ matches }: { matches: MatchWithRelations[] }) {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="font-medium">{match.vacancy.title}</div>
+              <a
+                href={match.vacancy.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline"
+              >
+                {match.vacancy.title}
+              </a>
               <div className="text-sm text-zinc-500">
                 {match.score}% · {match.cvProfile.label}
               </div>

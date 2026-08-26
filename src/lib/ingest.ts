@@ -128,17 +128,22 @@ function startOfTodayUTC(): Date {
 
 // The OTHER source has no site to scrape — it's a broad web search, gated by
 // a shared daily cap (not per-CV) so an LLM web-search run can't blow the
-// Claude API budget. Only ever reached from the cron path (see
-// runActiveSearches), never the manual "run search now" button.
+// Claude API budget. Reached from the cron path (see runActiveSearches) and
+// from the per-CV "Запустити «Інші» зараз" streaming trigger — never from
+// the general manual "run search now" button.
 export async function ingestOtherSearchConfig(
   searchConfig: SearchConfig,
+  callbacks?: { onText?: (delta: string) => void },
 ): Promise<IngestResult> {
   const createdToday = await prisma.vacancy.count({
     where: { source: "OTHER", foundAt: { gte: startOfTodayUTC() } },
   });
   const remaining = OTHER_DAILY_VACANCY_CAP - createdToday;
 
-  const vacancies = await fetchOtherVacancies({ maxResults: remaining });
+  const vacancies = await fetchOtherVacancies({
+    maxResults: remaining,
+    onText: callbacks?.onText,
+  });
   const { found, created } = await persistDiscoveries(searchConfig, vacancies);
 
   return {

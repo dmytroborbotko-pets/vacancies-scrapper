@@ -2,29 +2,31 @@
 // vacancies with a reservation, independent of any CV's own tech stack.
 // Used both as SearchConfig.keywords for the managed DJINNI/DOU configs and
 // to build the web-search query for the OTHER source.
+//
+// Deliberately specific/technical terms only — broad company-level
+// descriptors ("оборонна промисловість", "ВПК", "defense industry",
+// "defense tech", "defense contractor") were tried and dropped: Djinni's
+// `all_keywords` + `editorial=reservation` combo matched them against ANY
+// role at a reservation-eligible defense company, surfacing recruiters,
+// sales managers, and marketing designers alongside actual engineering
+// roles. Terms naming an actual technical domain (drones/UAV, embedded,
+// electronic warfare) stayed precise in testing.
 export const DEFENSE_KEYWORDS_LIST = [
-  "оборонна промисловість",
-  "ВПК",
-  "військово-промисловий комплекс",
   "дрони",
   "БПЛА",
   "безпілотники",
-  "озброєння",
-  "боєприпаси",
+  "антидрон",
   "радіоелектронна боротьба",
   "РЕБ",
-  "антидрон",
-  "оборонні технології",
-  "defense tech",
-  "military tech",
-  "defense industry",
+  "озброєння",
+  "боєприпаси",
+  "embedded",
   "drones",
   "UAV",
   "unmanned systems",
-  "weapons systems",
   "electronic warfare",
+  "weapons systems",
   "radar systems",
-  "defense contractor",
 ];
 
 export const DEFENSE_KEYWORDS = DEFENSE_KEYWORDS_LIST.join(", ");

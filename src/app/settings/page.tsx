@@ -3,6 +3,7 @@ import type { CvProfile, SearchConfig } from "@/generated/prisma/client";
 import { requireUserId } from "@/lib/session";
 import { RunTaskButton } from "@/components/run-task-button";
 import { SubmitButton } from "@/components/submit-button";
+import { OtherSearchTrigger } from "@/components/other-search-overlay";
 import {
   addSearchConfig,
   toggleSearchConfig,
@@ -119,6 +120,12 @@ export default async function SettingsPage() {
                       Режим «Інші»: {profile.otherModeEnabled ? "увімкнено" : "вимкнено"}
                     </SubmitButton>
                   </form>
+                  {profile.otherModeEnabled && (
+                    <OtherSearchTrigger
+                      cvProfileId={profile.id}
+                      className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                    />
+                  )}
                   <form action={deleteCvProfile}>
                     <input type="hidden" name="id" value={profile.id} />
                     <SubmitButton
