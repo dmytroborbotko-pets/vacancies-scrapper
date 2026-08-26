@@ -1,11 +1,37 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import type { Vacancy } from "@/generated/prisma/client";
 import { requireUserId } from "@/lib/session";
 import { markApplied, deleteMatch } from "@/app/to-apply/actions";
 import { SubmitButton } from "@/components/submit-button";
 
-export default async function VacanciesPage() {
+const PAGE_SIZE = 20;
+
+// Builds an href for a page link within one CV's section, preserving every
+// other CV section's own page param untouched.
+function pageHref(
+  searchParams: Record<string, string | undefined>,
+  cvProfileId: string,
+  page: number,
+): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value !== undefined && key !== `page_${cvProfileId}`) {
+      params.set(key, value);
+    }
+  }
+  if (page > 1) params.set(`page_${cvProfileId}`, String(page));
+  const query = params.toString();
+  return query ? `/vacancies?${query}` : "/vacancies";
+}
+
+export default async function VacanciesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const userId = await requireUserId();
+  const resolvedSearchParams = await searchParams;
   const cvProfiles = await prisma.cvProfile.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -52,7 +78,14 @@ export default async function VacanciesPage() {
       return b.foundAt.getTime() - a.foundAt.getTime();
     });
 
-    return { profile, vacancies, scoreByVacancyId, matchIdByVacancyId };
+    const totalPages = Math.max(1, Math.ceil(vacancies.length / PAGE_SIZE));
+    const rawPage = Number(resolvedSearchParams[`page_${profile.id}`] ?? "1");
+    const page = Number.isFinite(rawPage)
+      ? Math.min(Math.max(1, Math.trunc(rawPage)), totalPages)
+      : 1;
+    const pageVacancies = vacancies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    return { profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId };
   });
 
   const hasAnyProfile = cvProfiles.length > 0;
@@ -72,7 +105,7 @@ export default async function VacanciesPage() {
           &laquo;Запустити пошук зараз&raquo; на сторінці налаштувань.
         </p>
       ) : (
-        groups.map(({ profile, vacancies, scoreByVacancyId, matchIdByVacancyId }) => (
+        groups.map(({ profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId }) => (
           <section key={profile.id} className="flex flex-col gap-4">
             <h2 className="text-xl font-semibold">
               {profile.label} ({vacancies.length})
@@ -83,7 +116,7 @@ export default async function VacanciesPage() {
               </p>
             ) : (
               <ul className="flex flex-col gap-4">
-                {vacancies.map((vacancy) => {
+                {pageVacancies.map((vacancy) => {
                   const score = scoreByVacancyId.get(vacancy.id);
                   const matchId = matchIdByVacancyId.get(vacancy.id);
                   const scoreBorder =
@@ -160,6 +193,33 @@ export default async function VacanciesPage() {
                   );
                 })}
               </ul>
+            )}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 text-sm">
+                {page > 1 ? (
+                  <Link
+                    href={pageHref(resolvedSearchParams, profile.id, page - 1)}
+                    className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+                  >
+                    ← Попередня
+                  </Link>
+                ) : (
+                  <span className="text-zinc-300 dark:text-zinc-700">← Попередня</span>
+                )}
+                <span className="text-zinc-500">
+                  Сторінка {page} з {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Link
+                    href={pageHref(resolvedSearchParams, profile.id, page + 1)}
+                    className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+                  >
+                    Наступна →
+                  </Link>
+                ) : (
+                  <span className="text-zinc-300 dark:text-zinc-700">Наступна →</span>
+                )}
+              </div>
             )}
           </section>
         ))
