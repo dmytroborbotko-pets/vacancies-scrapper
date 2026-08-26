@@ -4,6 +4,7 @@ import { requireUserId } from "@/lib/session";
 import { RunTaskButton } from "@/components/run-task-button";
 import { SubmitButton } from "@/components/submit-button";
 import { OtherSearchTrigger } from "@/components/other-search-overlay";
+import { SourceCheckboxes, ReservationCheckbox } from "@/components/source-checkboxes";
 import {
   addSearchConfig,
   toggleSearchConfig,
@@ -163,30 +164,9 @@ export default async function SettingsPage() {
                   <span className="text-zinc-500">
                     Джерела (можна обидва):
                   </span>
-                  <label className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      name="sources"
-                      value="DJINNI"
-                      defaultChecked
-                    />
-                    Djinni
-                  </label>
-                  <label className="flex items-center gap-1">
-                    <input type="checkbox" name="sources" value="DOU" />
-                    DOU (експериментально)
-                  </label>
+                  <SourceCheckboxes />
                 </div>
-                <label className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-                  <input
-                    type="checkbox"
-                    name="requireReservation"
-                    value="true"
-                  />
-                  Лише вакансії з бронюванням від мобілізації (Djinni:
-                  перевірена добірка; DOU: пошук також враховує слово
-                  &laquo;бронювання&raquo;)
-                </label>
+                <ReservationCheckbox />
               </form>
               )}
 
