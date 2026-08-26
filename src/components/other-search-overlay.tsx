@@ -26,7 +26,9 @@ export function OtherSearchTrigger({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("Запускаю…");
   const [narration, setNarration] = useState("");
-  const [done, setDone] = useState<{ found: number; created: number } | null>(null);
+  const [done, setDone] = useState<{ found: number; created: number } | "unknown" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -60,6 +62,7 @@ export function OtherSearchTrigger({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let gotTerminalEvent = false;
 
       for (;;) {
         const { done: readerDone, value } = await reader.read();
@@ -76,11 +79,22 @@ export function OtherSearchTrigger({
           } else if (event.type === "text") {
             setNarration((prev) => (prev + event.delta).slice(-BUFFER_CHAR_LIMIT));
           } else if (event.type === "done") {
+            gotTerminalEvent = true;
             setDone({ found: event.found, created: event.created });
           } else if (event.type === "error") {
+            gotTerminalEvent = true;
             setError(event.message);
           }
         }
+      }
+
+      // The connection can close cleanly (no thrown error) without the
+      // final "done" byte having made it across — e.g. the server function
+      // hit its own time limit right at the tail end, after already
+      // persisting everything. That's still a finished run, not a failure
+      // — show success rather than leaving the overlay stuck on a spinner.
+      if (!gotTerminalEvent) {
+        setDone("unknown");
       }
     } catch (err) {
       if (!(err instanceof DOMException && err.name === "AbortError")) {
@@ -137,7 +151,9 @@ export function OtherSearchTrigger({
               <>
                 <p className="text-lg font-medium text-zinc-100">Готово</p>
                 <p className="text-sm text-zinc-400">
-                  Знайдено: {done.found} · Нових: {done.created}
+                  {done === "unknown"
+                    ? "Пошук завершився. Онови сторінку, щоб побачити нові вакансії, якщо вони є."
+                    : `Знайдено: ${done.found} · Нових: ${done.created}`}
                 </p>
                 <button
                   type="button"

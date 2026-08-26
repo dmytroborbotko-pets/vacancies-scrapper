@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { ingestSearchConfig, ingestOtherSearchConfig } from "@/lib/ingest";
 
-export const maxDuration = 300;
+// DJINNI + DOU (22 keyword terms each, DOU rate-limited to one request per
+// ~2s) + the OTHER web-search leg can together run close to 300s. Ask for
+// more headroom; Vercel silently caps this to whatever the plan allows
+// (300s on Hobby), so it's a no-op there but real slack on Pro/Enterprise.
+export const maxDuration = 800;
 
 type StreamEvent =
   | { type: "status"; message: string }
