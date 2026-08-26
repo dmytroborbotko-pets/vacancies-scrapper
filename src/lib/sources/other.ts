@@ -53,24 +53,31 @@ export async function fetchOtherVacancies(options: {
 }): Promise<FetchedVacancy[]> {
   if (options.maxResults <= 0) return [];
 
-  const searchStream = client.messages.stream({
-    model: "claude-sonnet-5",
-    max_tokens: 8192,
-    system: SEARCH_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Find defense/military-tech vacancies in Ukraine with a mobilization reservation, posted within the last ${OTHER_MAX_VACANCY_AGE_DAYS} days. Relevant topics/terms: ${DEFENSE_KEYWORDS}.`,
-      },
-    ],
-    tools: [
-      {
-        type: "web_search_20260318",
-        name: "web_search",
-        max_uses: 8,
-      },
-    ],
-  });
+  const searchStream = client.messages.stream(
+    {
+      model: "claude-sonnet-5",
+      max_tokens: 8192,
+      system: SEARCH_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: `Find defense/military-tech vacancies in Ukraine with a mobilization reservation, posted within the last ${OTHER_MAX_VACANCY_AGE_DAYS} days. Relevant topics/terms: ${DEFENSE_KEYWORDS}.`,
+        },
+      ],
+      tools: [
+        {
+          type: "web_search_20260318",
+          name: "web_search",
+          max_uses: 8,
+        },
+      ],
+    },
+    // Without this, a stalled request (network hiccup, Anthropic-side
+    // stall) hangs indefinitely — the route's try/catch never fires, so
+    // the client never gets an error/done event and the overlay just
+    // freezes forever with no explanation.
+    { timeout: 120_000 },
+  );
 
   if (options.onText) {
     searchStream.on("text", (delta) => options.onText!(delta));

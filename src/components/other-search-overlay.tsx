@@ -8,7 +8,8 @@ type StreamEvent =
   | { type: "status"; message: string }
   | { type: "text"; delta: string }
   | { type: "done"; found: number; created: number }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "ping" };
 
 const BUFFER_CHAR_LIMIT = 4000;
 // Must match the status message run-other/route.ts sends when it starts the

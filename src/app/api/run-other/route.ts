@@ -8,7 +8,8 @@ type StreamEvent =
   | { type: "status"; message: string }
   | { type: "text"; delta: string }
   | { type: "done"; found: number; created: number }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "ping" };
 
 // Per-CV manual trigger for "Інші" mode, streamed as NDJSON so the client
 // can show Claude's live search narration during the OTHER (web-search)
@@ -38,6 +39,13 @@ export async function GET(request: Request) {
         controller.close();
         return;
       }
+
+      // The OTHER leg can go tens of seconds between visible text deltas
+      // (Claude silently waiting on a web_search tool result) — without
+      // some traffic, an idle intermediate proxy can drop the connection
+      // long before either side times out, leaving the client frozen with
+      // no error. A steady trickle of bytes keeps it alive.
+      const heartbeat = setInterval(() => send({ type: "ping" }), 15_000);
 
       try {
         const managedConfigs = await prisma.searchConfig.findMany({
@@ -75,6 +83,7 @@ export async function GET(request: Request) {
           message: error instanceof Error ? error.message : "Невідома помилка",
         });
       } finally {
+        clearInterval(heartbeat);
         controller.close();
       }
     },
