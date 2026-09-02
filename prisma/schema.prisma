@@ -31,13 +31,34 @@ enum MatchOutcome {
   REJECTED
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+// What a search run looked at: one board, both boards, or a broad
+// web-search across the whole internet. Independent of the reservation
+// filter, which is just a boolean on top of any scope.
+enum SearchScope {
+  DOU
+  DJINNI
+  BOTH
+  EVERYWHERE
+}
 
-  cvProfiles CvProfile[]
+enum ScheduleInterval {
+  DAILY
+  EVERY_3_DAYS
+  WEEKLY
+  MONTHLY
+}
+
+model User {
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  passwordHash           String
+  createdAt              DateTime @default(now())
+  // "Don't suggest scheduling a job after a manual search" — set once the
+  // user checks that box in the post-search follow-up modal.
+  hideScheduleSuggestion Boolean  @default(false)
+
+  cvProfiles        CvProfile[]
+  scheduledSearches ScheduledSearch[]
 }
 
 model CvProfile {
@@ -52,41 +73,15 @@ model CvProfile {
   fileData      Bytes
   extractedText String
   createdAt     DateTime @default(now())
-  // When true, the app runs a broad "everywhere" search for defense/
-  // military-tech vacancies with a reservation instead of the profile's own
-  // keyword configs (see SearchConfig.managed).
-  otherModeEnabled Boolean @default(false)
+  // Short skill/technology/domain terms auto-extracted from extractedText
+  // once at upload time (see lib/cv.ts#extractSearchTerms), cached here and
+  // reused as DOU/Djinni query terms for every search until the CV is
+  // replaced. Never user-edited.
+  searchTerms   String[]
 
-  searchConfigs SearchConfig[]
-  matches       Match[]
-}
-
-// A keyword search belongs to one CV profile: results found under it are
-// scoped to that profile, so two CVs never share a "which vacancies match
-// which CV" view.
-model SearchConfig {
-  id                 String    @id @default(cuid())
-  keywords           String
-  source             Source
-  // Comma-separated Djinni exp_level values (e.g. "1y,2y"). Null/empty
-  // means no experience filter.
-  expLevels          String?
-  // Djinni's own curated "Бронювання" collection tag (editorial=reservation)
-  // — companies Djinni has verified offer military draft reservation. Far
-  // more precise than text-searching for the word, which mostly hits
-  // vacancies that just mention the topic without actually offering it.
-  requireReservation Boolean   @default(false)
-  active             Boolean   @default(true)
-  // System-generated config (source=DJINNI/DOU/OTHER, canonical defense
-  // keywords) created automatically when a CV's otherModeEnabled turns on.
-  // Hidden from the manual keyword-config UI and excluded from the manual
-  // "run search now" trigger — only the daily cron scans it.
-  managed            Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  cvProfile          CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
-  cvProfileId        String
-
-  discoveries VacancyDiscovery[]
+  matches           Match[]
+  discoveries       VacancyDiscovery[]
+  scheduledSearches ScheduledSearch[]
 }
 
 model Vacancy {
@@ -102,25 +97,27 @@ model Vacancy {
   discoveries VacancyDiscovery[]
 }
 
-// Join between a Vacancy (globally deduped by URL) and the SearchConfig
-// that found it, so the same vacancy can be discovered under more than one
-// CV profile without duplicating the Vacancy row.
+// Direct link between a Vacancy (globally deduped by URL) and the CvProfile
+// whose search found it — no longer routed through a persisted search
+// config, so the same vacancy can belong to more than one CV's pool without
+// duplicating the Vacancy row, and nothing about it is ever deleted on a
+// later search.
 model VacancyDiscovery {
-  id             String       @id @default(cuid())
-  vacancy        Vacancy      @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
-  vacancyId      String
-  searchConfig   SearchConfig @relation(fields: [searchConfigId], references: [id], onDelete: Cascade)
-  searchConfigId String
-  createdAt      DateTime     @default(now())
+  id          String    @id @default(cuid())
+  vacancy     Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  vacancyId   String
+  cvProfile   CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
+  cvProfileId String
+  foundAt     DateTime  @default(now())
 
-  @@unique([vacancyId, searchConfigId])
+  @@unique([vacancyId, cvProfileId])
 }
 
 model Match {
-  id          String      @id @default(cuid())
-  vacancy     Vacancy     @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  vacancy     Vacancy       @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   vacancyId   String
-  cvProfile   CvProfile   @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
+  cvProfile   CvProfile     @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
   cvProfileId String
   score       Int
   coverLetter String?
@@ -129,4 +126,24 @@ model Match {
   createdAt   DateTime      @default(now())
 
   @@unique([vacancyId, cvProfileId])
+}
+
+// A user-configured recurring search: "run this same search every N days".
+// cvProfileId null means "Всі" — every CV the user owns at evaluation time,
+// not a frozen list. Evaluated by the daily cron (see api/cron/daily-scan);
+// Vercel Hobby cron can only fire once/day, so there is deliberately no
+// time-of-day field, only an interval.
+model ScheduledSearch {
+  id                 String           @id @default(cuid())
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  cvProfile          CvProfile?       @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
+  cvProfileId        String?
+  scope              SearchScope
+  requireReservation Boolean          @default(false)
+  interval           ScheduleInterval
+  paused             Boolean          @default(false)
+  lastRunAt          DateTime?
+  nextRunAt          DateTime
+  createdAt          DateTime         @default(now())
 }
