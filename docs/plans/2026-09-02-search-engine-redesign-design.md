@@ -60,6 +60,16 @@ all-CVs button, and the separate "Інші" trigger).
 9. Searches across CVs/sources within one run stay **sequential**, matching
    today's DOU rate-limiting behavior and staying safely inside the 300s
    Vercel function budget.
+10. **Task 1's migration was hand-written instead of a literal
+    `prisma migrate dev` run.** The plan's one-liner would have been
+    data-lossy: `VacancyDiscovery` needed a new required `cvProfileId`
+    column derived from each row's `SearchConfig` before `SearchConfig`
+    could be dropped, which a generated migration can't sequence on its own.
+    The applied migration instead adds the new columns nullable, backfills
+    them from the still-present `SearchConfig` table, dedupes rows that
+    collapse under the new `(vacancyId, cvProfileId)` uniqueness (2 of 446
+    existing rows were exact collisions), then drops the old columns and
+    `SearchConfig` itself.
 
 ## Data model
 

@@ -74,10 +74,10 @@ model CvProfile {
   extractedText String
   createdAt     DateTime @default(now())
   // Short skill/technology/domain terms auto-extracted from extractedText
-  // once at upload time (see lib/cv.ts#extractSearchTerms), cached here and
-  // reused as DOU/Djinni query terms for every search until the CV is
-  // replaced. Never user-edited.
-  searchTerms   String[]
+  // once at upload time (see the CV search-term extraction helper, added in
+  // a later task), cached here and reused as DOU/Djinni query terms for
+  // every search until the CV is replaced. Never user-edited.
+  searchTerms   String[] @default([])
 
   matches           Match[]
   discoveries       VacancyDiscovery[]
@@ -91,6 +91,8 @@ model Vacancy {
   title     String
   company   String?
   rawText   String
+  // First seen globally, across all CVs — distinct from
+  // VacancyDiscovery.foundAt, which is first seen for one specific CV.
   foundAt   DateTime @default(now())
 
   matches     Match[]
@@ -98,19 +100,19 @@ model Vacancy {
 }
 
 // Direct link between a Vacancy (globally deduped by URL) and the CvProfile
-// whose search found it — no longer routed through a persisted search
-// config, so the same vacancy can belong to more than one CV's pool without
-// duplicating the Vacancy row, and nothing about it is ever deleted on a
-// later search.
+// whose search found it, so the same vacancy can belong to more than one
+// CV's pool without duplicating the Vacancy row.
 model VacancyDiscovery {
   id          String    @id @default(cuid())
   vacancy     Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   vacancyId   String
   cvProfile   CvProfile @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
   cvProfileId String
+  // First seen for this specific CV — distinct from Vacancy.foundAt, which
+  // is first seen globally across all CVs.
   foundAt     DateTime  @default(now())
 
-  @@unique([vacancyId, cvProfileId])
+  @@unique([cvProfileId, vacancyId])
 }
 
 model Match {
@@ -140,6 +142,11 @@ model ScheduledSearch {
   cvProfile          CvProfile?       @relation(fields: [cvProfileId], references: [id], onDelete: Cascade)
   cvProfileId        String?
   scope              SearchScope
+  // On Djinni this maps to the site's own curated "Бронювання" collection
+  // tag (editorial=reservation) — companies Djinni has verified offer
+  // military draft reservation, far more precise than text-searching for
+  // the word. DOU has no such curated tag, so it falls back to appending
+  // the keyword "бронювання" to the search query (see lib/sources/dou.ts).
   requireReservation Boolean          @default(false)
   interval           ScheduleInterval
   paused             Boolean          @default(false)
