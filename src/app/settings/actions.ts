@@ -144,7 +144,13 @@ export async function uploadCvProfile(formData: FormData) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const extractedText = await extractTextFromFile(buffer, file.name);
-  const searchTerms = await extractSearchTerms(extractedText);
+
+  let searchTerms: string[] = [];
+  try {
+    searchTerms = await extractSearchTerms(extractedText);
+  } catch (error) {
+    console.error("extractSearchTerms failed during CV upload:", error);
+  }
 
   await prisma.cvProfile.create({
     data: {
