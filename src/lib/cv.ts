@@ -23,3 +23,41 @@ export async function extractTextFromFile(
 
   throw new Error(`Непідтримуваний формат файлу: .${ext}`);
 }
+
+import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+
+const client = new Anthropic();
+
+const SearchTermsSchema = z.object({
+  terms: z
+    .array(z.string())
+    .min(5)
+    .max(15)
+    .describe(
+      "Short skill/technology/domain terms suitable as job-board keyword-search queries",
+    ),
+});
+
+const SEARCH_TERMS_SYSTEM_PROMPT = `You extract short search-engine keywords from a candidate's CV, suitable for querying a job board's keyword search (like "Python", "FastAPI", "computer vision", "embedded systems"). Prefer specific technologies, frameworks, and named domains over generic soft-skill words ("teamwork", "communication"). Return 8-15 terms, ranked by how central they are to the candidate's profile, no duplicates, no explanations.`;
+
+// Cached once on CvProfile.searchTerms at upload time (see
+// settings/actions.ts#uploadCvProfile) and reused as DOU/Djinni query terms
+// for every search of that CV, instead of a user-typed keyword list.
+export async function extractSearchTerms(cvText: string): Promise<string[]> {
+  const response = await client.messages.parse({
+    model: "claude-haiku-4-5",
+    max_tokens: 1024,
+    system: SEARCH_TERMS_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: cvText }],
+    output_config: {
+      format: zodOutputFormat(SearchTermsSchema),
+    },
+  });
+
+  if (!response.parsed_output) {
+    throw new Error("Claude did not return parseable search terms");
+  }
+  return response.parsed_output.terms;
+}

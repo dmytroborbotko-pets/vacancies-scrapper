@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { extractTextFromFile } from "@/lib/cv";
+import { extractTextFromFile, extractSearchTerms } from "@/lib/cv";
 import { requireUserId } from "@/lib/session";
 import { DEFENSE_KEYWORDS } from "@/lib/defense-keywords";
 
@@ -144,6 +144,7 @@ export async function uploadCvProfile(formData: FormData) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const extractedText = await extractTextFromFile(buffer, file.name);
+  const searchTerms = await extractSearchTerms(extractedText);
 
   await prisma.cvProfile.create({
     data: {
@@ -152,6 +153,7 @@ export async function uploadCvProfile(formData: FormData) {
       fileName: file.name,
       fileData: buffer,
       extractedText,
+      searchTerms,
     },
   });
 
