@@ -1,6 +1,13 @@
 import type { ScheduleInterval } from "@/generated/prisma/client";
 export type { ScheduleInterval };
 
+export const INTERVAL_LABELS: Record<ScheduleInterval, string> = {
+  DAILY: "Щодня",
+  EVERY_3_DAYS: "Кожні 3 дні",
+  WEEKLY: "Щотижня",
+  MONTHLY: "Щомісяця",
+};
+
 // Vercel Hobby-plan cron can only fire once/day, so there's deliberately no
 // time-of-day here — just "how many days/weeks/months from the last run".
 export function computeNextRunAt(interval: ScheduleInterval, from: Date = new Date()): Date {
