@@ -211,6 +211,8 @@ export async function runSearch(params: RunSearchParams): Promise<RunSearchCvRes
       // Out of budget: report this CV and every remaining one as a clean,
       // explicit skip instead of starting more work that can't finish.
       for (let j = i; j < cvProfiles.length; j++) {
+        emitStatus(params.onStatus, `Пропущено «${cvProfiles[j].label}» — вичерпано ліміт часу`);
+        console.error(`runSearch: CV ${cvProfiles[j].id} (${cvProfiles[j].label}) skipped — time budget exceeded`);
         results.push({
           cvProfileId: cvProfiles[j].id,
           found: 0,

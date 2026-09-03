@@ -9,7 +9,7 @@ export const maxDuration = 300;
 
 type StreamEvent =
   | { type: "status"; message: string }
-  | { type: "done"; found: number; created: number }
+  | { type: "done"; found: number; created: number; failed: number }
   | { type: "error"; message: string }
   | { type: "ping" };
 
@@ -20,26 +20,34 @@ const VALID_SCOPES: SearchScope[] = ["DOU", "DJINNI", "BOTH", "EVERYWHERE"];
 // Body: { cvProfileId: string | "all", scope: SearchScope, requireReservation: boolean }.
 export async function POST(request: Request) {
   const userId = await requireUserId();
-  const body = await request.json().catch(() => ({}));
+  const body: Record<string, unknown> = await request.json().catch(() => ({}));
   const cvProfileIdParam = String(body.cvProfileId ?? "");
-  const scope = body.scope as SearchScope;
+  const scopeParam = body.scope;
   const requireReservation = body.requireReservation === true;
 
   const encoder = new TextEncoder();
+  let closed = false;
+  let heartbeat: ReturnType<typeof setInterval>;
 
   const stream = new ReadableStream({
     async start(controller) {
       const send = (event: StreamEvent) => {
-        controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+        } catch {
+          closed = true;
+        }
       };
 
       // A silent multi-minute leg (e.g. EVERYWHERE waiting on web_search)
       // can let an idle intermediate proxy drop the connection long before
       // either side times out — a steady trickle of bytes keeps it alive.
-      const heartbeat = setInterval(() => send({ type: "ping" }), 15_000);
+      heartbeat = setInterval(() => send({ type: "ping" }), 15_000);
 
       try {
-        if (!VALID_SCOPES.includes(scope)) {
+        const scope = VALID_SCOPES.find((s) => s === scopeParam);
+        if (!scope) {
           send({ type: "error", message: "Невідомий тип пошуку" });
           return;
         }
@@ -60,7 +68,10 @@ export async function POST(request: Request) {
               : [];
 
         if (cvProfileIds.length === 0) {
-          send({ type: "error", message: "CV не знайдено" });
+          send({
+            type: "error",
+            message: cvProfileIdParam === "all" ? "Немає жодного завантаженого CV" : "CV не знайдено",
+          });
           return;
         }
 
@@ -71,23 +82,34 @@ export async function POST(request: Request) {
           onStatus: (message) => send({ type: "status", message }),
         });
 
-        if (results.every((r) => r.error)) {
-          send({ type: "error", message: results[0].error ?? "Невідома помилка" });
+        if (results.length > 0 && results.every((r) => r.error)) {
+          const message = [...new Set(results.map((r) => r.error).filter(Boolean))].join("; ") || "Невідома помилка";
+          send({ type: "error", message });
           return;
         }
 
         const totalFound = results.reduce((sum, r) => sum + r.found, 0);
         const totalCreated = results.reduce((sum, r) => sum + r.created, 0);
-        send({ type: "done", found: totalFound, created: totalCreated });
+        const failedCount = results.filter((r) => r.error).length;
+        send({ type: "done", found: totalFound, created: totalCreated, failed: failedCount });
       } catch (error) {
         send({
           type: "error",
           message: error instanceof Error ? error.message : "Невідома помилка",
         });
       } finally {
+        closed = true;
         clearInterval(heartbeat);
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // Already closed/errored — e.g. the client disconnected via cancel().
+        }
       }
+    },
+    cancel() {
+      closed = true;
+      clearInterval(heartbeat);
     },
   });
 
