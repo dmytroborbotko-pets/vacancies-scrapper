@@ -77,7 +77,7 @@ export async function createScheduledSearch(
 
 export async function updateScheduledSearch(
   formData: FormData,
-): Promise<{ ok: true } | { ok: false; reason: "invalid-input" | "unowned-cv" | "not-found" }> {
+): Promise<{ ok: true } | { ok: false; reason: "invalid-input" | "unowned-cv" | "not-found" | "duplicate" }> {
   const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");
   const scopeRaw = String(formData.get("scope") ?? "");
@@ -100,6 +100,25 @@ export async function updateScheduledSearch(
   if (!existing) {
     console.error(`updateScheduledSearch: no ScheduledSearch ${id} owned by user ${userId}`);
     return { ok: false, reason: "not-found" as const };
+  }
+
+  // Same dedup guard as createScheduledSearch: editing a row to match another
+  // row's {cvProfileId, scope, requireReservation, interval} would otherwise
+  // create the exact duplicate the create path is designed to prevent.
+  const duplicate = await prisma.scheduledSearch.findFirst({
+    where: {
+      userId,
+      cvProfileId: resolved.cvProfileId,
+      scope,
+      requireReservation,
+      interval,
+      NOT: { id },
+    },
+    select: { id: true },
+  });
+  if (duplicate) {
+    console.error(`updateScheduledSearch: duplicate schedule already exists (${duplicate.id})`);
+    return { ok: false, reason: "duplicate" as const };
   }
 
   await prisma.scheduledSearch.update({

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 import { SearchParamsFields, SCOPE_LABELS, ALL_CV_PROFILES, type Scope } from "@/components/search-params-fields";
 import { createScheduledSearch, setHideScheduleSuggestion } from "@/app/settings/schedule-actions";
-import { INTERVAL_LABELS, type ScheduleInterval } from "@/lib/scheduling";
+import { INTERVAL_LABELS, SCHEDULE_ERROR_LABELS, type ScheduleInterval } from "@/lib/scheduling";
 
 type StreamEvent =
   | { type: "status"; message: string }
@@ -16,12 +16,6 @@ type StreamEvent =
 type Stage = "config" | "running" | "schedule-suggest" | "done" | "error";
 
 type Result = { found: number; created: number; failed: number } | "unknown" | null;
-
-const SCHEDULE_ERROR_LABELS: Record<"invalid-input" | "unowned-cv" | "duplicate", string> = {
-  "invalid-input": "некоректні дані",
-  "unowned-cv": "CV не знайдено",
-  duplicate: "такий запланований пошук вже існує",
-};
 
 export function SearchModal({
   cvProfiles,

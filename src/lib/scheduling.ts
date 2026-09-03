@@ -8,6 +8,16 @@ export const INTERVAL_LABELS: Record<ScheduleInterval, string> = {
   MONTHLY: "Щомісяця",
 };
 
+// Shared between ScheduleModal (create + edit) and SearchModal's inline
+// "schedule this search?" prompt (create only, so it only ever indexes 3 of
+// these 4 keys — that's fine, a narrower union can index a wider Record).
+export const SCHEDULE_ERROR_LABELS: Record<"invalid-input" | "unowned-cv" | "duplicate" | "not-found", string> = {
+  "invalid-input": "некоректні дані",
+  "unowned-cv": "CV не знайдено",
+  duplicate: "такий запланований пошук вже існує",
+  "not-found": "запланований пошук не знайдено",
+};
+
 // Vercel Hobby-plan cron can only fire once/day, so there's deliberately no
 // time-of-day here — just "how many days/weeks/months from the last run".
 export function computeNextRunAt(interval: ScheduleInterval, from: Date = new Date()): Date {

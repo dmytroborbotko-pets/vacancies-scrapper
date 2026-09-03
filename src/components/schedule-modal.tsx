@@ -2,25 +2,24 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SearchParamsFields, type Scope } from "@/components/search-params-fields";
+import { SearchParamsFields, ALL_CV_PROFILES, type Scope } from "@/components/search-params-fields";
 import { createScheduledSearch, updateScheduledSearch } from "@/app/settings/schedule-actions";
-import { INTERVAL_LABELS, type ScheduleInterval } from "@/lib/scheduling";
+import { INTERVAL_LABELS, SCHEDULE_ERROR_LABELS, type ScheduleInterval } from "@/lib/scheduling";
 
 export type ScheduleModalInitial = {
   id?: string; // present = edit mode, absent = create mode
-  cvProfileId: string; // ALL_CV_PROFILES or a CV id
+  cvProfileId: string; // ALL_CV_PROFILES (see search-params-fields) or a CV id
   scope: Scope;
   requireReservation: boolean;
   interval: ScheduleInterval;
 };
 
-const SCHEDULE_ERROR_LABELS: Record<"invalid-input" | "unowned-cv" | "duplicate" | "not-found", string> = {
-  "invalid-input": "некоректні дані",
-  "unowned-cv": "CV не знайдено",
-  duplicate: "такий запланований пошук вже існує",
-  "not-found": "запланований пошук не знайдено",
-};
-
+// IMPORTANT: local state is seeded from `initial` exactly once and never
+// resynced. Callers MUST either conditionally render this component
+// (`{open && <ScheduleModal ... />}`, unmounting between different
+// `initial` values) or pass `key={initial.id ?? "new"}` to force a remount
+// — do NOT keep one instance mounted across different `initial` props
+// while toggling `open`, or the form will silently show stale data.
 export function ScheduleModal({
   open,
   onClose,
@@ -77,7 +76,7 @@ export function ScheduleModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
       <div className="flex w-full max-w-md flex-col gap-4 rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-900">
         <h2 className="text-xl font-semibold">
-          {isEdit ? "Редагувати заплановий пошук" : "Запланувати автоматичний пошук"}
+          {isEdit ? "Редагувати запланований пошук" : "Запланувати автоматичний пошук"}
         </h2>
 
         <SearchParamsFields
