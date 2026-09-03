@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SubmitButton } from "@/components/submit-button";
+import { ScheduledJobsNav, type ScheduledJob } from "@/components/scheduled-jobs-nav";
 
 type NavItem = { href: string; label: string };
 
@@ -10,10 +11,14 @@ export function MobileNav({
   navItems,
   userEmail,
   logoutAction,
+  scheduledJobs,
+  cvProfiles,
 }: {
   navItems: NavItem[];
   userEmail: string;
   logoutAction: () => void;
+  scheduledJobs: ScheduledJob[];
+  cvProfiles: { id: string; label: string }[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -50,6 +55,9 @@ export function MobileNav({
                 {item.label}
               </Link>
             ))}
+            <div className="mt-1">
+              <ScheduledJobsNav jobs={scheduledJobs} cvProfiles={cvProfiles} />
+            </div>
             <div className="mt-2 flex items-center justify-between border-t border-zinc-200 pt-3 dark:border-zinc-800">
               <Link
                 href="/account"

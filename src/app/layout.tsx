@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { MobileNav } from "@/components/mobile-nav";
 import { TaskStatusProvider } from "@/components/task-status";
 import { SubmitButton } from "@/components/submit-button";
+import { ScheduledJobsNav, type ScheduledJob } from "@/components/scheduled-jobs-nav";
 import "./globals.css";
 
 const mulish = Mulish({
@@ -33,6 +35,33 @@ async function logout() {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
 
+  const cvProfiles = session?.user
+    ? await prisma.cvProfile.findMany({
+        where: { userId: session.user.id },
+        select: { id: true, label: true },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const scheduledJobs: ScheduledJob[] = session?.user
+    ? (
+        await prisma.scheduledSearch.findMany({
+          where: { userId: session.user.id },
+          include: { cvProfile: { select: { label: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      ).map((row) => ({
+        id: row.id,
+        cvProfileId: row.cvProfileId,
+        cvProfileLabel: row.cvProfile?.label ?? null,
+        scope: row.scope,
+        requireReservation: row.requireReservation,
+        interval: row.interval,
+        paused: row.paused,
+        nextRunAt: row.nextRunAt.toISOString(),
+      }))
+    : [];
+
   return (
     <html
       lang="uk"
@@ -58,6 +87,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   ))}
                 </div>
                 <div className="ml-auto hidden items-center gap-3 text-sm md:flex">
+                  <ScheduledJobsNav jobs={scheduledJobs} cvProfiles={cvProfiles} />
                   <Link
                     href="/account"
                     className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -78,6 +108,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                     navItems={navItems}
                     userEmail={session.user.email ?? ""}
                     logoutAction={logout}
+                    scheduledJobs={scheduledJobs}
+                    cvProfiles={cvProfiles}
                   />
                 </div>
               </>
