@@ -97,4 +97,6 @@ export async function deleteScheduledSearch(formData: FormData) {
 export async function setHideScheduleSuggestion(hide: boolean) {
   const userId = await requireUserId();
   await prisma.user.update({ where: { id: userId }, data: { hideScheduleSuggestion: hide } });
+
+  revalidatePath("/settings");
 }
