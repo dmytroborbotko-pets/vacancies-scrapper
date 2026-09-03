@@ -2,22 +2,17 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { FetchedVacancy } from "@/lib/sources/types";
-import { DEFENSE_KEYWORDS, OTHER_MAX_VACANCY_AGE_DAYS } from "@/lib/defense-keywords";
 
 const client = new Anthropic();
 
-const SEARCH_SYSTEM_PROMPT = `Do NOT use code execution or write/run scripts of any kind. Call the web_search tool directly, one query at a time. This restriction is critical — violating it wastes budget and time.
+// Vacancies discovered by this web-search leg must have an estimated
+// publish date within this many days of the scan run, or an undeterminable
+// date is treated as too old to trust.
+export const OTHER_MAX_VACANCY_AGE_DAYS = 14;
 
-You search the public web for current job vacancies in Ukraine's defense and military-tech sector that explicitly offer a reservation from mobilization ("бронювання").
-
-Search broadly — job boards, company career pages, aggregators, anywhere — not limited to any single site. For each distinct vacancy you find, report:
-- its title
-- the direct URL to the posting
-- the employer/company if known
-- a short excerpt describing the role and requirements
-- how many days ago it was posted, if the page states or implies this (e.g. "posted 3 days ago", an explicit date, "today", "this week")
-
-Do 4-6 targeted searches, then write a final summary listing every distinct vacancy you found, one per paragraph, with all of the above — keep each paragraph brief, this is a list not an essay. If you cannot determine how many days ago a vacancy was posted, say so explicitly rather than guessing.`;
+// Global cap (not per-CV) on new OTHER-source vacancies created per day,
+// across the whole app — protects the Claude API budget.
+export const OTHER_DAILY_VACANCY_CAP = 100;
 
 const CandidateSchema = z.object({
   vacancies: z.array(
@@ -35,11 +30,31 @@ const CandidateSchema = z.object({
   ),
 });
 
-// Broad, site-agnostic search for defense/military-tech vacancies with a
-// reservation. Two-step: (1) let Claude search the web and write up what it
-// found in prose, (2) a separate structured-output call extracts a clean
-// list from that prose. Filters out anything older than
-// OTHER_MAX_VACANCY_AGE_DAYS or with an undeterminable publish date.
+function buildSearchSystemPrompt(requireReservation: boolean): string {
+  return `Do NOT use code execution or write/run scripts of any kind. Call the web_search tool directly, one query at a time. This restriction is critical — violating it wastes budget and time.
+
+You search the public web for current IT/tech job vacancies in Ukraine that match the given candidate's skills and domain.
+${
+  requireReservation
+    ? "\nOnly report vacancies that explicitly offer a reservation from mobilization (\"бронювання\") — skip anything that does not mention it.\n"
+    : ""
+}
+Search broadly — job boards, company career pages, aggregators, anywhere — not limited to any single site. For each distinct vacancy you find, report:
+- its title
+- the direct URL to the posting
+- the employer/company if known
+- a short excerpt describing the role and requirements
+- how many days ago it was posted, if the page states or implies this (e.g. "posted 3 days ago", an explicit date, "today", "this week")
+
+Do 4-6 targeted searches, then write a final summary listing every distinct vacancy you found, one per paragraph, with all of the above — keep each paragraph brief, this is a list not an essay. If you cannot determine how many days ago a vacancy was posted, say so explicitly rather than guessing.`;
+}
+
+// Broad, site-agnostic search driven by the CV's own extracted terms
+// (see CvProfile.searchTerms), with an optional reservation-from-mobilization
+// filter — not tied to any fixed topic. Two-step: (1) let Claude search the
+// web and write up what it found in prose, (2) a separate structured-output
+// call extracts a clean list from that prose. Filters out anything older
+// than OTHER_MAX_VACANCY_AGE_DAYS or with an undeterminable publish date.
 //
 // Deliberately no `thinking` config: tested with adaptive thinking enabled,
 // it never surfaced usable text (thinking blocks came back empty — the
@@ -48,6 +63,8 @@ const CandidateSchema = z.object({
 // more likely to reach for an unrequested code_execution tool to batch
 // searches, which is both slower and less reliable.
 export async function fetchOtherVacancies(options: {
+  cvSearchTerms: string[];
+  requireReservation: boolean;
   maxResults: number;
 }): Promise<FetchedVacancy[]> {
   if (options.maxResults <= 0) return [];
@@ -56,11 +73,11 @@ export async function fetchOtherVacancies(options: {
     {
       model: "claude-sonnet-5",
       max_tokens: 8192,
-      system: SEARCH_SYSTEM_PROMPT,
+      system: buildSearchSystemPrompt(options.requireReservation),
       messages: [
         {
           role: "user",
-          content: `Find defense/military-tech vacancies in Ukraine with a mobilization reservation, posted within the last ${OTHER_MAX_VACANCY_AGE_DAYS} days. Relevant topics/terms: ${DEFENSE_KEYWORDS}.`,
+          content: `Find vacancies posted within the last ${OTHER_MAX_VACANCY_AGE_DAYS} days matching this candidate profile. Relevant skills/terms: ${options.cvSearchTerms.join(", ")}.`,
         },
       ],
       tools: [
@@ -99,11 +116,6 @@ export async function fetchOtherVacancies(options: {
 
   if (!extraction.parsed_output) return [];
 
-  // Only exclude a candidate when Claude found a date AND it's stale — an
-  // undeterminable date passes through. In practice company career pages
-  // (the OTHER leg's main source, unlike Djinni/DOU's structured listings)
-  // almost never expose a "posted N days ago" marker, so treating
-  // "undeterminable" as "reject" was silently discarding every result.
   const fresh = extraction.parsed_output.vacancies.filter(
     (candidate) =>
       candidate.publishedDaysAgo === null ||
