@@ -28,6 +28,8 @@ export async function GET(request: Request) {
   }> = [];
 
   for (const job of dueJobs) {
+    let jobResult: { scheduledSearchId: string; ok: boolean; error?: string; cvResults?: RunSearchCvResult[] };
+
     try {
       // job.cvProfileId (single-CV case) was already verified to belong to
       // job.userId when the ScheduledSearch was created (see
@@ -61,25 +63,43 @@ export async function GET(request: Request) {
       // the same check in api/search/route.ts — instead of reporting
       // { ok: true } for a run that produced nothing.
       const allFailed = cvResults.length > 0 && cvResults.every((r) => r.error);
-      if (allFailed) {
-        const message =
-          [...new Set(cvResults.map((r) => r.error).filter(Boolean))].join("; ") || "Unknown error";
-        results.push({ scheduledSearchId: job.id, ok: false, error: message, cvResults });
-      } else {
-        results.push({ scheduledSearchId: job.id, ok: true, cvResults });
-      }
+      jobResult = allFailed
+        ? {
+            scheduledSearchId: job.id,
+            ok: false,
+            error:
+              [...new Set(cvResults.map((r) => r.error).filter(Boolean))].join("; ") || "Unknown error",
+            cvResults,
+          }
+        : { scheduledSearchId: job.id, ok: true, cvResults };
+    } catch (error) {
+      jobResult = {
+        scheduledSearchId: job.id,
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
 
+    // Reschedule unconditionally — a genuinely broken job must still advance
+    // on its own interval rather than being retried on every daily cron tick
+    // forever. This is deliberately outside the try/catch above so it can't
+    // produce a second, contradictory results entry for this job (see the
+    // catch below, which only logs).
+    try {
       await prisma.scheduledSearch.update({
         where: { id: job.id },
         data: { lastRunAt: now, nextRunAt: computeNextRunAt(job.interval, now) },
       });
     } catch (error) {
-      results.push({
-        scheduledSearchId: job.id,
-        ok: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+      // A reschedule failure (e.g. a transient DB error) is logged, not
+      // thrown: this job's nextRunAt didn't advance, so it'll simply be
+      // picked up again on the next cron tick — a safe failure mode
+      // (retried, not lost) — and the rest of the batch still gets
+      // evaluated instead of the whole run aborting on one bad update.
+      console.error(`Failed to reschedule ScheduledSearch ${job.id}`, error);
     }
+
+    results.push(jobResult);
   }
 
   return NextResponse.json({ ranAt: now.toISOString(), jobsEvaluated: dueJobs.length, results });
