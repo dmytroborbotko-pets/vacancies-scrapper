@@ -1,25 +1,22 @@
 "use client";
 
+import { useId } from "react";
 import type { SearchScope } from "@/generated/prisma/client";
 
-// Re-exported as `Scope` (rather than requiring every caller to import
-// `SearchScope` from the generated client directly) so this stays the one
-// place the search-run modal (Task 11) and schedule modal (Task 12) get
-// their scope type from — both hand-rolling this union previously drifted
-// out of sync with the Prisma enum (see ingest.ts's SearchScope and
-// scheduling.ts's ScheduleInterval, both fixed the same way). Importing
-// only the type keeps this client component from pulling in `@/lib/ingest`
-// (which imports server-only modules like `@/lib/prisma`) — `import type`
-// is erased entirely at compile time, so nothing from the generated
-// client's module graph reaches the browser bundle.
+// Re-exported as `Scope` so callers don't hand-roll this union themselves
+// (that previously drifted out of sync with the Prisma enum). Importing
+// straight from the generated client avoids an extra hop through ingest.ts's
+// re-export and doesn't depend on that re-export surviving.
 export type Scope = SearchScope;
 
-const SCOPE_OPTIONS: { value: Scope; label: string }[] = [
-  { value: "DOU", label: "Тільки DOU" },
-  { value: "DJINNI", label: "Тільки Djinni" },
-  { value: "BOTH", label: "DOU + Djinni" },
-  { value: "EVERYWHERE", label: "По всьому інтернету" },
-];
+export const SCOPE_LABELS: Record<Scope, string> = {
+  DOU: "Тільки DOU",
+  DJINNI: "Тільки Djinni",
+  BOTH: "DOU + Djinni",
+  EVERYWHERE: "По всьому інтернету",
+};
+
+export const ALL_CV_PROFILES = "all";
 
 export function SearchParamsFields({
   cvProfiles,
@@ -38,8 +35,10 @@ export function SearchParamsFields({
   requireReservation: boolean;
   onRequireReservationChange: (value: boolean) => void;
 }) {
+  const scopeGroupName = useId();
+
   return (
-    <div className="flex flex-col gap-4 text-left">
+    <div className="flex w-full flex-col gap-4 text-left">
       <label className="flex flex-col gap-1">
         <span className="text-sm text-zinc-500">CV</span>
         <select
@@ -47,7 +46,7 @@ export function SearchParamsFields({
           onChange={(e) => onCvProfileIdChange(e.target.value)}
           className="rounded-md border border-zinc-300 px-3 py-1.5 text-base dark:border-zinc-700 dark:bg-zinc-900"
         >
-          <option value="all">Всі</option>
+          <option value={ALL_CV_PROFILES}>Всі</option>
           {cvProfiles.map((cv) => (
             <option key={cv.id} value={cv.id}>
               {cv.label}
@@ -58,16 +57,16 @@ export function SearchParamsFields({
 
       <fieldset className="flex flex-col gap-1">
         <legend className="text-sm text-zinc-500">Де шукати</legend>
-        {SCOPE_OPTIONS.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 text-base">
+        {(Object.entries(SCOPE_LABELS) as [Scope, string][]).map(([value, label]) => (
+          <label key={value} className="flex items-center gap-2 text-base">
             <input
               type="radio"
-              name="scope"
-              value={option.value}
-              checked={scope === option.value}
-              onChange={() => onScopeChange(option.value)}
+              name={scopeGroupName}
+              value={value}
+              checked={scope === value}
+              onChange={() => onScopeChange(value)}
             />
-            {option.label}
+            {label}
           </label>
         ))}
       </fieldset>
