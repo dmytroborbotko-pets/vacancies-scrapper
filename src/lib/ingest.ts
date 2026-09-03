@@ -1,37 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import { fetchDjinniVacancies } from "@/lib/sources/djinni";
 import { fetchDouVacancies } from "@/lib/sources/dou";
-import { fetchOtherVacancies } from "@/lib/sources/other";
-import { OTHER_DAILY_VACANCY_CAP } from "@/lib/defense-keywords";
+import { fetchOtherVacancies, OTHER_DAILY_VACANCY_CAP } from "@/lib/sources/other";
+import { scoreCvProfile } from "@/lib/scoring";
 import type { FetchedVacancy } from "@/lib/sources/types";
-import type { SearchConfig } from "@/generated/prisma/client";
+import type { CvProfile } from "@/generated/prisma/client";
 
-export interface IngestResult {
-  searchConfigId: string;
-  keywords: string;
-  found: number;
-  created: number;
+export type SearchScope = "DOU" | "DJINNI" | "BOTH" | "EVERYWHERE";
+
+export interface RunSearchParams {
+  cvProfileIds: string[];
+  scope: SearchScope;
+  requireReservation: boolean;
+  onStatus?: (message: string) => void;
 }
 
-// A SearchConfig's `keywords` field is a comma-separated list of terms,
-// OR'd together: a vacancy matching any single term qualifies (e.g.
-// "TensorFlow, PyTorch, RAG" should not require all three in one posting).
-// Djinni's own `all_keywords` param ANDs every word in one query, so OR
-// semantics are achieved by querying each term separately and merging.
-function splitKeywordTerms(keywords: string): string[] {
-  return keywords
-    .split(",")
-    .map((term) => term.trim())
-    .filter(Boolean);
+export interface RunSearchCvResult {
+  cvProfileId: string;
+  found: number;
+  created: number;
+  scored: number;
+  toApply: number;
+  error?: string;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function startOfTodayUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
 // Shared tail for every ingest path: dedup by sourceUrl against the global
-// Vacancy table, create rows for new ones, and record that this SearchConfig
-// (and therefore its CV profile) discovered each vacancy.
+// Vacancy table, create rows for new ones, and link this CV profile to each
+// — never deleting anything, so re-running a search only ever adds.
 async function persistDiscoveries(
-  searchConfig: SearchConfig,
+  cvProfileId: string,
   vacancies: Iterable<FetchedVacancy>,
 ): Promise<{ found: number; created: number }> {
   let found = 0;
@@ -59,15 +63,12 @@ async function persistDiscoveries(
 
     await prisma.vacancyDiscovery.upsert({
       where: {
-        vacancyId_searchConfigId: {
+        cvProfileId_vacancyId: {
           vacancyId: vacancyRecord.id,
-          searchConfigId: searchConfig.id,
+          cvProfileId,
         },
       },
-      create: {
-        vacancyId: vacancyRecord.id,
-        searchConfigId: searchConfig.id,
-      },
+      create: { vacancyId: vacancyRecord.id, cvProfileId },
       update: {},
     });
   }
@@ -75,120 +76,119 @@ async function persistDiscoveries(
   return { found, created };
 }
 
-export async function ingestSearchConfig(
-  searchConfig: SearchConfig,
-): Promise<IngestResult> {
-  const terms = splitKeywordTerms(searchConfig.keywords);
-  const expLevels = searchConfig.expLevels
-    ? searchConfig.expLevels.split(",").map((level) => level.trim()).filter(Boolean)
-    : undefined;
-
-  const vacancyBySourceUrl = new Map<string, FetchedVacancy>();
+// A CV's cached searchTerms are OR'd together: a vacancy matching any one
+// term qualifies. DOU/Djinni only accept one query at a time, so each term
+// is queried separately and merged by sourceUrl.
+async function fetchDouOrDjinniVacancies(
+  source: "DOU" | "DJINNI",
+  terms: string[],
+  requireReservation: boolean,
+): Promise<FetchedVacancy[]> {
+  const bySourceUrl = new Map<string, FetchedVacancy>();
   for (const term of terms) {
     const vacancies =
-      searchConfig.source === "DOU"
-        ? await fetchDouVacancies(term, {
-            requireReservation: searchConfig.requireReservation,
-          })
-        : await fetchDjinniVacancies(term, {
-            expLevels,
-            requireReservation: searchConfig.requireReservation,
-          });
-
+      source === "DOU"
+        ? await fetchDouVacancies(term, { requireReservation })
+        : await fetchDjinniVacancies(term, { requireReservation });
     for (const vacancy of vacancies) {
-      if (!vacancyBySourceUrl.has(vacancy.sourceUrl)) {
-        vacancyBySourceUrl.set(vacancy.sourceUrl, vacancy);
+      if (!bySourceUrl.has(vacancy.sourceUrl)) {
+        bySourceUrl.set(vacancy.sourceUrl, vacancy);
       }
     }
-
     // dou.ua is scraped HTML, not a public feed API — stay conservative
     // between requests rather than firing one per term back to back.
-    if (searchConfig.source === "DOU" && terms.length > 1) {
+    if (source === "DOU" && terms.length > 1) {
       await sleep(2000);
     }
   }
-
-  const { found, created } = await persistDiscoveries(
-    searchConfig,
-    vacancyBySourceUrl.values(),
-  );
-
-  return {
-    searchConfigId: searchConfig.id,
-    keywords: searchConfig.keywords,
-    found,
-    created,
-  };
+  return Array.from(bySourceUrl.values());
 }
 
-function startOfTodayUTC(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-}
+async function ingestForCvProfile(
+  cvProfile: CvProfile,
+  scope: SearchScope,
+  requireReservation: boolean,
+  onStatus?: (message: string) => void,
+): Promise<{ found: number; created: number }> {
+  let found = 0;
+  let created = 0;
 
-// The OTHER source has no site to scrape — it's a broad web search, gated by
-// a shared daily cap (not per-CV) so an LLM web-search run can't blow the
-// Claude API budget. Reached from the cron path (see runActiveSearches) and
-// from the per-CV "Запустити «Інші» зараз" streaming trigger — never from
-// the general manual "run search now" button.
-export async function ingestOtherSearchConfig(
-  searchConfig: SearchConfig,
-): Promise<IngestResult> {
-  const createdToday = await prisma.vacancy.count({
-    where: { source: "OTHER", foundAt: { gte: startOfTodayUTC() } },
-  });
-  const remaining = OTHER_DAILY_VACANCY_CAP - createdToday;
-
-  const vacancies = await fetchOtherVacancies({ maxResults: remaining });
-  const { found, created } = await persistDiscoveries(searchConfig, vacancies);
-
-  return {
-    searchConfigId: searchConfig.id,
-    keywords: searchConfig.keywords,
-    found,
-    created,
-  };
-}
-
-// System-wide: used by the daily cron job, which scans every user's active
-// searches in one run — not scoped to a session. Includes managed configs
-// (the "Інші" otherMode's DJINNI/DOU/OTHER legs), unlike the manual trigger.
-export async function runActiveSearches(): Promise<IngestResult[]> {
-  const configs = await prisma.searchConfig.findMany({
-    where: { active: true },
-  });
-
-  const results: IngestResult[] = [];
-  for (const config of configs) {
-    results.push(
-      config.source === "OTHER"
-        ? await ingestOtherSearchConfig(config)
-        : await ingestSearchConfig(config),
-    );
+  if (scope === "DOU" || scope === "BOTH") {
+    onStatus?.(`Сканую DOU для «${cvProfile.label}»…`);
+    const vacancies = await fetchDouOrDjinniVacancies("DOU", cvProfile.searchTerms, requireReservation);
+    const result = await persistDiscoveries(cvProfile.id, vacancies);
+    found += result.found;
+    created += result.created;
   }
-  return results;
+
+  if (scope === "DJINNI" || scope === "BOTH") {
+    onStatus?.(`Сканую Djinni для «${cvProfile.label}»…`);
+    const vacancies = await fetchDouOrDjinniVacancies("DJINNI", cvProfile.searchTerms, requireReservation);
+    const result = await persistDiscoveries(cvProfile.id, vacancies);
+    found += result.found;
+    created += result.created;
+  }
+
+  if (scope === "EVERYWHERE") {
+    onStatus?.(`Шукаю по всьому інтернету для «${cvProfile.label}»…`);
+    const createdToday = await prisma.vacancy.count({
+      where: { source: "OTHER", foundAt: { gte: startOfTodayUTC() } },
+    });
+    const remaining = OTHER_DAILY_VACANCY_CAP - createdToday;
+    const vacancies = await fetchOtherVacancies({
+      cvSearchTerms: cvProfile.searchTerms,
+      requireReservation,
+      maxResults: remaining,
+    });
+    const result = await persistDiscoveries(cvProfile.id, vacancies);
+    found += result.found;
+    created += result.created;
+  }
+
+  return { found, created };
 }
 
-// Scoped to one user's own configs — used by the manual "Запустити пошук
-// зараз" button, which must never run another user's searches. Includes
-// managed configs too: a CV with "Інші" mode on has its manual configs
-// deactivated (see toggleOtherMode), so this naturally runs the normal
-// keyword search for CVs with "Інші" off and the managed DJINNI/DOU/OTHER
-// legs for CVs with it on — without scanning both for the same CV.
-export async function runActiveSearchesForUser(
-  userId: string,
-): Promise<IngestResult[]> {
-  const configs = await prisma.searchConfig.findMany({
-    where: { active: true, cvProfile: { userId } },
+// The single generic search+score entry point. Called from the manual
+// search modal's streaming route and from the schedule evaluator — never
+// called from anywhere else, so manual and automatic runs can't drift.
+//
+// Scoring is not optional or separately triggered: if a CV's ingest
+// succeeds, it is scored immediately, in the same call, before moving to
+// the next CV. If one CV's ingest throws, the others in the batch still get
+// searched and scored — errors are per-CV, not batch-fatal.
+export async function runSearch(params: RunSearchParams): Promise<RunSearchCvResult[]> {
+  const cvProfiles = await prisma.cvProfile.findMany({
+    where: { id: { in: params.cvProfileIds } },
   });
 
-  const results: IngestResult[] = [];
-  for (const config of configs) {
-    results.push(
-      config.source === "OTHER"
-        ? await ingestOtherSearchConfig(config)
-        : await ingestSearchConfig(config),
-    );
+  const results: RunSearchCvResult[] = [];
+
+  for (const cvProfile of cvProfiles) {
+    try {
+      const { found, created } = await ingestForCvProfile(
+        cvProfile,
+        params.scope,
+        params.requireReservation,
+        params.onStatus,
+      );
+
+      params.onStatus?.(`Оцінюю відповідність для «${cvProfile.label}»…`);
+      const { scored, toApply } = await scoreCvProfile(cvProfile);
+
+      results.push({ cvProfileId: cvProfile.id, found, created, scored, toApply });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Невідома помилка";
+      params.onStatus?.(`Помилка для «${cvProfile.label}»: ${message}`);
+      results.push({
+        cvProfileId: cvProfile.id,
+        found: 0,
+        created: 0,
+        scored: 0,
+        toApply: 0,
+        error: message,
+      });
+    }
   }
+
   return results;
 }
