@@ -5,9 +5,9 @@ import type { FetchedVacancy } from "@/lib/sources/types";
 
 const client = new Anthropic();
 
-// Vacancies discovered by this web-search leg must have an estimated
-// publish date within this many days of the scan run, or an undeterminable
-// date is treated as too old to trust.
+// A vacancy discovered by this web-search leg is excluded only when Claude
+// found an estimated publish date AND it's older than this many days — an
+// undeterminable date is allowed through rather than treated as too old.
 export const OTHER_MAX_VACANCY_AGE_DAYS = 14;
 
 // Global cap (not per-CV) on new OTHER-source vacancies created per day,
@@ -53,8 +53,9 @@ Do 4-6 targeted searches, then write a final summary listing every distinct vaca
 // (see CvProfile.searchTerms), with an optional reservation-from-mobilization
 // filter — not tied to any fixed topic. Two-step: (1) let Claude search the
 // web and write up what it found in prose, (2) a separate structured-output
-// call extracts a clean list from that prose. Filters out anything older
-// than OTHER_MAX_VACANCY_AGE_DAYS or with an undeterminable publish date.
+// call extracts a clean list from that prose. Filters out anything with a
+// known publish date older than OTHER_MAX_VACANCY_AGE_DAYS; an undeterminable
+// publish date passes through unfiltered.
 //
 // Deliberately no `thinking` config: tested with adaptive thinking enabled,
 // it never surfaced usable text (thinking blocks came back empty — the
@@ -116,6 +117,11 @@ export async function fetchOtherVacancies(options: {
 
   if (!extraction.parsed_output) return [];
 
+  // Only exclude a candidate when Claude found a date AND it's stale — an
+  // undeterminable date passes through. In practice company career pages
+  // (the OTHER leg's main source, unlike Djinni/DOU's structured listings)
+  // almost never expose a "posted N days ago" marker, so treating
+  // "undeterminable" as "reject" was silently discarding every result.
   const fresh = extraction.parsed_output.vacancies.filter(
     (candidate) =>
       candidate.publishedDaysAgo === null ||
