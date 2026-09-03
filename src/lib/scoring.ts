@@ -65,7 +65,7 @@ export async function scoreCvProfile(
 ): Promise<ScoringResult> {
   const vacancies = await prisma.vacancy.findMany({
     where: {
-      discoveries: { some: { searchConfig: { cvProfileId: cvProfile.id } } },
+      discoveries: { some: { cvProfileId: cvProfile.id } },
       matches: { none: { cvProfileId: cvProfile.id } },
     },
     take: MAX_SCORED_PER_RUN,
