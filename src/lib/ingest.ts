@@ -8,7 +8,7 @@ import type { CvProfile, SearchScope } from "@/generated/prisma/client";
 
 export type { SearchScope };
 
-// Vercel's hard ceiling is 300s (see api/run-search/route.ts's maxDuration).
+// Vercel's hard ceiling is 300s (see api/search/route.ts's maxDuration).
 // Leave headroom for the route's own overhead and the final response.
 const RUN_SEARCH_BUDGET_MS = 260_000;
 
