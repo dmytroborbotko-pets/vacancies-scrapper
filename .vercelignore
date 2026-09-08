@@ -1,0 +1,8 @@
+# The Vercel CLI does not honor .gitignore for its own upload filtering,
+# so local secret files must be excluded here explicitly — a local .env
+# was previously uploaded during `vercel --prod` and silently shadowed the
+# dashboard-configured CRON_SECRET at runtime, causing Vercel's own Cron
+# trigger (which sends the dashboard's secret) to fail with 401.
+.env
+.env.local
+.env.*.local
