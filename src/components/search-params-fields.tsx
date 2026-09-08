@@ -1,21 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import type { SearchScope } from "@/generated/prisma/client";
-import { ALL_CV_PROFILES } from "@/lib/search-constants";
-
-// Re-exported as `Scope` so callers don't hand-roll this union themselves
-// (that previously drifted out of sync with the Prisma enum). Importing
-// straight from the generated client avoids an extra hop through ingest.ts's
-// re-export and doesn't depend on that re-export surviving.
-export type Scope = SearchScope;
-
-export const SCOPE_LABELS: Record<Scope, string> = {
-  DOU: "Тільки DOU",
-  DJINNI: "Тільки Djinni",
-  BOTH: "DOU + Djinni",
-  EVERYWHERE: "По всьому інтернету",
-};
+import { ALL_CV_PROFILES, SCOPE_LABELS, type Scope } from "@/lib/search-constants";
 
 export function SearchParamsFields({
   cvProfiles,

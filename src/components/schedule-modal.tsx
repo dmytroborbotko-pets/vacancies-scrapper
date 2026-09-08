@@ -2,7 +2,8 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SearchParamsFields, type Scope } from "@/components/search-params-fields";
+import { SearchParamsFields } from "@/components/search-params-fields";
+import type { Scope } from "@/lib/search-constants";
 import { createScheduledSearch, updateScheduledSearch } from "@/app/settings/schedule-actions";
 import { INTERVAL_LABELS, SCHEDULE_ERROR_LABELS, type ScheduleInterval } from "@/lib/scheduling";
 
