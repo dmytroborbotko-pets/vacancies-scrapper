@@ -90,7 +90,7 @@ export function ScheduledJobsNav({
                         {job.paused && " · на паузі"}
                       </div>
                       <div className="text-sm text-zinc-500">
-                        Наступний запуск: {new Date(job.nextRunAt).toLocaleString("uk-UA")}
+                        Наступний запуск: {new Date(job.nextRunAt).toLocaleDateString("uk-UA")}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">

@@ -155,7 +155,11 @@ export async function toggleScheduledSearchPaused(formData: FormData) {
   if (count === 0) {
     console.error(`toggleScheduledSearchPaused: no ScheduledSearch ${id} owned by user ${userId} was updated`);
   }
-  revalidatePath("/settings");
+  // The scheduled-jobs nav now lives in the root layout and renders on
+  // every route, not just /settings — revalidate the whole layout so a
+  // pause toggled from any page (e.g. /vacancies) isn't left showing stale
+  // data there.
+  revalidatePath("/", "layout");
 }
 
 export async function deleteScheduledSearch(formData: FormData) {
@@ -170,7 +174,11 @@ export async function deleteScheduledSearch(formData: FormData) {
   if (count === 0) {
     console.error(`deleteScheduledSearch: no ScheduledSearch ${id} owned by user ${userId} was deleted`);
   }
-  revalidatePath("/settings");
+  // The scheduled-jobs nav now lives in the root layout and renders on
+  // every route, not just /settings — revalidate the whole layout so a
+  // delete triggered from any page (e.g. /to-apply) isn't left showing
+  // stale data there.
+  revalidatePath("/", "layout");
 }
 
 // Called directly from a client component (not a <form> action) — Next.js

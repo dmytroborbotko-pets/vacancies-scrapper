@@ -34,19 +34,28 @@ async function logout() {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
+  // Can't use requireUserId() here: the layout renders for logged-out
+  // visitors too and must degrade to empty lists rather than throw. But a
+  // stale JWT (tokens live up to 400 days) predating the id-assignment
+  // callback in auth.ts can carry a session with no user.id — binding it
+  // once here and gating both queries on `userId` (never on `session?.user`)
+  // ensures a missing id short-circuits to `[]` instead of reaching Prisma,
+  // where `where: { userId: undefined }` would omit the filter entirely and
+  // leak every user's rows. Do not "simplify" this back to `session?.user`.
+  const userId = session?.user?.id;
 
-  const cvProfiles = session?.user
+  const cvProfiles = userId
     ? await prisma.cvProfile.findMany({
-        where: { userId: session.user.id },
+        where: { userId },
         select: { id: true, label: true },
         orderBy: { createdAt: "desc" },
       })
     : [];
 
-  const scheduledJobs: ScheduledJob[] = session?.user
+  const scheduledJobs: ScheduledJob[] = userId
     ? (
         await prisma.scheduledSearch.findMany({
-          where: { userId: session.user.id },
+          where: { userId },
           include: { cvProfile: { select: { label: true } } },
           orderBy: { createdAt: "desc" },
         })
