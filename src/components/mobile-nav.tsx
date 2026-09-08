@@ -45,10 +45,9 @@ export function MobileNav({
       {/* No z-index on this panel: a positioned z-index would create a new
           stacking context that traps descendant fixed-position children
           (e.g. the scheduled-jobs modal's z-[100] overlay) beneath other
-          page-level fixed elements outside it (e.g. task-status.tsx's z-50
-          toast). `absolute` alone still paints above sibling static content
-          below it in DOM order, which is all this dropdown needs relative
-          to the header/page. */}
+          page-level fixed elements outside it. `absolute` alone still paints
+          above sibling static content below it in DOM order, which is all
+          this dropdown needs relative to the header/page. */}
       {open && (
         <div className="absolute inset-x-0 top-full border-b border-zinc-200 bg-zinc-50 px-4 py-4 shadow-sm sm:px-6 dark:border-zinc-800 dark:bg-black">
           <div className="flex flex-col gap-3 text-sm">

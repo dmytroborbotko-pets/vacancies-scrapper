@@ -4,7 +4,6 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { MobileNav } from "@/components/mobile-nav";
-import { TaskStatusProvider } from "@/components/task-status";
 import { SubmitButton } from "@/components/submit-button";
 import { ScheduledJobsNav, type ScheduledJob } from "@/components/scheduled-jobs-nav";
 import "./globals.css";
@@ -125,11 +124,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             )}
           </nav>
         </header>
-        <TaskStatusProvider>
-          <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
-            {children}
-          </main>
-        </TaskStatusProvider>
+        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+          {children}
+        </main>
       </body>
     </html>
   );
