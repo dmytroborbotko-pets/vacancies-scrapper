@@ -3,7 +3,8 @@
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/spinner";
-import { SearchParamsFields, SCOPE_LABELS, ALL_CV_PROFILES, type Scope } from "@/components/search-params-fields";
+import { SearchParamsFields, SCOPE_LABELS, type Scope } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 import { createScheduledSearch, setHideScheduleSuggestion } from "@/app/settings/schedule-actions";
 import { INTERVAL_LABELS, SCHEDULE_ERROR_LABELS, type ScheduleInterval } from "@/lib/scheduling";
 

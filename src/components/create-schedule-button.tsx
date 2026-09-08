@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ScheduleModal } from "@/components/schedule-modal";
-import { ALL_CV_PROFILES } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 
 export function CreateScheduleButton({
   cvProfiles,

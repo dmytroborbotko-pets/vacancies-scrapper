@@ -8,7 +8,7 @@ import { INTERVAL_LABELS, SCHEDULE_ERROR_LABELS, type ScheduleInterval } from "@
 
 export type ScheduleModalInitial = {
   id?: string; // present = edit mode, absent = create mode
-  cvProfileId: string; // ALL_CV_PROFILES (see search-params-fields) or a CV id
+  cvProfileId: string; // ALL_CV_PROFILES (see @/lib/search-constants) or a CV id
   scope: Scope;
   requireReservation: boolean;
   interval: ScheduleInterval;

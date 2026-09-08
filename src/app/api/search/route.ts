@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { runSearch, type SearchScope } from "@/lib/ingest";
-import { ALL_CV_PROFILES } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 
 // DOU (rate-limited) + Djinni + the OTHER web-search leg, across possibly
 // several CVs in one "Всі" run, can together run close to 300s — the hard

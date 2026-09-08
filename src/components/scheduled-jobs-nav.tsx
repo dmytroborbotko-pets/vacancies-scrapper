@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ScheduleModal, type ScheduleModalInitial } from "@/components/schedule-modal";
 import { SubmitButton } from "@/components/submit-button";
 import { toggleScheduledSearchPaused, deleteScheduledSearch } from "@/app/settings/schedule-actions";
-import { SCOPE_LABELS, ALL_CV_PROFILES, type Scope } from "@/components/search-params-fields";
+import { SCOPE_LABELS, type Scope } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 import { INTERVAL_LABELS, type ScheduleInterval } from "@/lib/scheduling";
 
 export type ScheduledJob = {

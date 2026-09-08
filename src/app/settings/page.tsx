@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { SubmitButton } from "@/components/submit-button";
 import { SearchModal } from "@/components/search-modal";
-import { ALL_CV_PROFILES } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 import { CreateScheduleButton } from "@/components/create-schedule-button";
 import { deleteCvProfile, uploadCvProfile } from "./actions";
 

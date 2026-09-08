@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { computeNextRunAt, type ScheduleInterval } from "@/lib/scheduling";
 import type { SearchScope } from "@/lib/ingest";
-import { ALL_CV_PROFILES } from "@/components/search-params-fields";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 
 // Keyed records (not plain arrays) so adding a value to the Prisma enum
 // without updating this file fails to compile — same exhaustiveness

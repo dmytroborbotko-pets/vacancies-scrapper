@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import type { SearchScope } from "@/generated/prisma/client";
+import { ALL_CV_PROFILES } from "@/lib/search-constants";
 
 // Re-exported as `Scope` so callers don't hand-roll this union themselves
 // (that previously drifted out of sync with the Prisma enum). Importing
@@ -15,8 +16,6 @@ export const SCOPE_LABELS: Record<Scope, string> = {
   BOTH: "DOU + Djinni",
   EVERYWHERE: "По всьому інтернету",
 };
-
-export const ALL_CV_PROFILES = "all";
 
 export function SearchParamsFields({
   cvProfiles,
