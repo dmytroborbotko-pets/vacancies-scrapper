@@ -31,8 +31,8 @@ export async function changePassword(formData: FormData) {
 
 export async function deleteAccount() {
   const userId = await requireUserId();
-  // Cascades: CvProfile -> SearchConfig -> VacancyDiscovery, and
-  // CvProfile -> Match. Shared Vacancy rows are untouched.
+  // Cascades: User -> CvProfile -> {VacancyDiscovery, Match}, and
+  // User -> ScheduledSearch. Shared Vacancy rows are untouched.
   await prisma.user.delete({ where: { id: userId } });
   await signOut({ redirectTo: "/login" });
 }

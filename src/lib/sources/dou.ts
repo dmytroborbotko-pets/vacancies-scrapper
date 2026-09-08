@@ -16,9 +16,11 @@ export interface FetchDouOptions {
 // dou.ua's Terms of Use reportedly prohibit automated collection without
 // the administration's consent (unverified directly — the page 404'd when
 // checked — but referenced across multiple DOU community threads). This
-// source is therefore off by default (SearchConfig.source must be
-// explicitly set to DOU) and deliberately conservative: one request per
-// keyword, first page of results only, no pagination follow-through.
+// source is therefore only queried when a search run's scope is DOU or
+// BOTH (scope is chosen per-run via the SearchScope enum in the search
+// modal, not a persistent per-config default) and is deliberately
+// conservative: one request per keyword, first page of results only, no
+// pagination follow-through.
 export async function fetchDouVacancies(
   keyword: string,
   options: FetchDouOptions = {},

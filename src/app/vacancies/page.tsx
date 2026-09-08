@@ -37,28 +37,24 @@ export default async function VacanciesPage({
   const cvProfiles = await prisma.cvProfile.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    omit: { fileData: true, extractedText: true },
     include: {
-      searchConfigs: {
-        include: {
-          discoveries: {
-            include: { vacancy: true },
-          },
-        },
-      },
-      matches: true,
+      discoveries: { include: { vacancy: true } },
+      matches: { omit: { coverLetter: true } },
     },
   });
 
   const groups = cvProfiles.map((profile) => {
     const vacancyById = new Map<string, Vacancy>();
-    for (const config of profile.searchConfigs) {
-      // A vacancy found only through a config the user has since disabled
-      // (e.g. unchecked DOU) shouldn't keep cluttering the list — only
-      // configs still active surface their discoveries here.
-      if (!config.active) continue;
-      for (const discovery of config.discoveries) {
-        vacancyById.set(discovery.vacancy.id, discovery.vacancy);
-      }
+    // Per-CV first-seen date, distinct from Vacancy.foundAt (first seen
+    // globally across all CVs) — see the field comments in schema.prisma.
+    const discoveredAtByVacancyId = new Map<string, Date>();
+    // Discoveries are permanent once made (see design doc: "never delete") —
+    // the only ways a vacancy leaves this list are being dismissed, applied
+    // to, or scoring below MIN_SCORE_THRESHOLD, handled below.
+    for (const discovery of profile.discoveries) {
+      vacancyById.set(discovery.vacancy.id, discovery.vacancy);
+      discoveredAtByVacancyId.set(discovery.vacancy.id, discovery.foundAt);
     }
     const scoreByVacancyId = new Map<string, number>();
     const matchIdByVacancyId = new Map<string, string>();
@@ -85,7 +81,9 @@ export default async function VacanciesPage({
       if (scoreA !== undefined && scoreB !== undefined) return scoreB - scoreA;
       if (scoreA !== undefined) return -1;
       if (scoreB !== undefined) return 1;
-      return b.foundAt.getTime() - a.foundAt.getTime();
+      const discoveredA = discoveredAtByVacancyId.get(a.id)!;
+      const discoveredB = discoveredAtByVacancyId.get(b.id)!;
+      return discoveredB.getTime() - discoveredA.getTime();
     });
 
     const totalPages = Math.max(1, Math.ceil(vacancies.length / PAGE_SIZE));
@@ -95,7 +93,16 @@ export default async function VacanciesPage({
       : 1;
     const pageVacancies = vacancies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    return { profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId };
+    return {
+      profile,
+      vacancies,
+      pageVacancies,
+      page,
+      totalPages,
+      scoreByVacancyId,
+      matchIdByVacancyId,
+      discoveredAtByVacancyId,
+    };
   });
 
   const hasAnyProfile = cvProfiles.length > 0;
@@ -115,7 +122,7 @@ export default async function VacanciesPage({
           &laquo;Запустити пошук зараз&raquo; на сторінці налаштувань.
         </p>
       ) : (
-        groups.map(({ profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId }) => (
+        groups.map(({ profile, vacancies, pageVacancies, page, totalPages, scoreByVacancyId, matchIdByVacancyId, discoveredAtByVacancyId }) => (
           <section key={profile.id} className="flex flex-col gap-4">
             <h2 className="text-2xl font-semibold">
               {profile.label} ({vacancies.length})
@@ -172,7 +179,7 @@ export default async function VacanciesPage({
                       </div>
                       <div className="mt-1 text-sm text-zinc-500">
                         {vacancy.source} · знайдено{" "}
-                        {vacancy.foundAt.toLocaleString("uk-UA")}
+                        {discoveredAtByVacancyId.get(vacancy.id)!.toLocaleString("uk-UA")}
                       </div>
                       <p className="mt-2 line-clamp-3 text-base text-zinc-600 dark:text-zinc-400">
                         {vacancy.rawText}

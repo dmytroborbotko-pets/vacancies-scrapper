@@ -5,7 +5,7 @@ import type { CvProfile, Vacancy } from "@/generated/prisma/client";
 // Matches at or above this score get a generated cover letter and move
 // into the "До подачі" (to-apply) list; below it, the score is still
 // visible on /vacancies but nothing further is generated.
-export const APPLY_THRESHOLD = 55;
+const APPLY_THRESHOLD = 55;
 
 // Scoring is called from request handlers capped at 300s (Vercel Hobby),
 // often sharing that budget with the ingest legs that ran just before it.
@@ -65,7 +65,7 @@ export async function scoreCvProfile(
 ): Promise<ScoringResult> {
   const vacancies = await prisma.vacancy.findMany({
     where: {
-      discoveries: { some: { searchConfig: { cvProfileId: cvProfile.id } } },
+      discoveries: { some: { cvProfileId: cvProfile.id } },
       matches: { none: { cvProfileId: cvProfile.id } },
     },
     take: MAX_SCORED_PER_RUN,
@@ -90,27 +90,4 @@ export async function scoreCvProfile(
   );
 
   return { cvProfileId: cvProfile.id, scored, toApply };
-}
-
-// System-wide: used by the daily cron job.
-export async function scoreAllProfiles(): Promise<ScoringResult[]> {
-  const profiles = await prisma.cvProfile.findMany();
-  const results: ScoringResult[] = [];
-  for (const profile of profiles) {
-    results.push(await scoreCvProfile(profile));
-  }
-  return results;
-}
-
-// Scoped to one user's own CV profiles — used by the manual "Порахувати %
-// збігу" button.
-export async function scoreProfilesForUser(
-  userId: string,
-): Promise<ScoringResult[]> {
-  const profiles = await prisma.cvProfile.findMany({ where: { userId } });
-  const results: ScoringResult[] = [];
-  for (const profile of profiles) {
-    results.push(await scoreCvProfile(profile));
-  }
-  return results;
 }
