@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { computeNextRunAt, type ScheduleInterval } from "@/lib/scheduling";
 import type { SearchScope } from "@/lib/ingest";
+import { ALL_CV_PROFILES } from "@/components/search-params-fields";
 
 // Keyed records (not plain arrays) so adding a value to the Prisma enum
 // without updating this file fails to compile — same exhaustiveness
@@ -12,15 +13,15 @@ import type { SearchScope } from "@/lib/ingest";
 const VALID_SCOPES: Record<SearchScope, true> = { DOU: true, DJINNI: true, BOTH: true, EVERYWHERE: true };
 const VALID_INTERVALS: Record<ScheduleInterval, true> = { DAILY: true, EVERY_3_DAYS: true, WEEKLY: true, MONTHLY: true };
 
-// cvProfileIdRaw is "" / "all" for "Всі"; anything else must be a CV the
-// caller owns. Returns { ok: true, cvProfileId: null } for "Всі", and
+// cvProfileIdRaw is "" / ALL_CV_PROFILES for "Всі"; anything else must be a
+// CV the caller owns. Returns { ok: true, cvProfileId: null } for "Всі", and
 // { ok: false } (never throws, never returns undefined) if an id was given
 // but doesn't belong to this user — the caller is responsible for bailing.
 async function resolveOwnedCvProfileId(
   userId: string,
   cvProfileIdRaw: string,
 ): Promise<{ ok: true; cvProfileId: string | null } | { ok: false }> {
-  if (!cvProfileIdRaw || cvProfileIdRaw === "all") return { ok: true, cvProfileId: null };
+  if (!cvProfileIdRaw || cvProfileIdRaw === ALL_CV_PROFILES) return { ok: true, cvProfileId: null };
   const cvProfile = await prisma.cvProfile.findFirst({
     where: { id: cvProfileIdRaw, userId },
     select: { id: true },

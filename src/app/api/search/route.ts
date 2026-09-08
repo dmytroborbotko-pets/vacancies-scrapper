@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { runSearch, type SearchScope } from "@/lib/ingest";
+import { ALL_CV_PROFILES } from "@/components/search-params-fields";
 
 // DOU (rate-limited) + Djinni + the OTHER web-search leg, across possibly
 // several CVs in one "Всі" run, can together run close to 300s — the hard
@@ -17,7 +18,7 @@ const VALID_SCOPES: SearchScope[] = ["DOU", "DJINNI", "BOTH", "EVERYWHERE"];
 
 // Single streaming entry point for every manual search — replaces the old
 // plain-redirect "run all CVs" route and the separate "Інші" NDJSON route.
-// Body: { cvProfileId: string | "all", scope: SearchScope, requireReservation: boolean }.
+// Body: { cvProfileId: string | ALL_CV_PROFILES, scope: SearchScope, requireReservation: boolean }.
 export async function POST(request: Request) {
   const userId = await requireUserId();
   const body: Record<string, unknown> = await request.json().catch(() => ({}));
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
         }
 
         const cvProfileIds =
-          cvProfileIdParam === "all"
+          cvProfileIdParam === ALL_CV_PROFILES
             ? (
                 await prisma.cvProfile.findMany({
                   where: { userId },
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         if (cvProfileIds.length === 0) {
           send({
             type: "error",
-            message: cvProfileIdParam === "all" ? "Немає жодного завантаженого CV" : "CV не знайдено",
+            message: cvProfileIdParam === ALL_CV_PROFILES ? "Немає жодного завантаженого CV" : "CV не знайдено",
           });
           return;
         }

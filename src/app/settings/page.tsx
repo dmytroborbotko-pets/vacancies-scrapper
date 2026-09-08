@@ -8,16 +8,20 @@ import { deleteCvProfile, uploadCvProfile } from "./actions";
 
 export default async function SettingsPage() {
   const userId = await requireUserId();
-  const cvProfiles = await prisma.cvProfile.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { hideScheduleSuggestion: true },
-  });
+  const [cvProfiles, user] = await Promise.all([
+    prisma.cvProfile.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, label: true, extractedText: true, searchTerms: true },
+    }),
+    prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { hideScheduleSuggestion: true },
+    }),
+  ]);
 
   const cvProfileOptions = cvProfiles.map((p) => ({ id: p.id, label: p.label }));
+  const hasCvProfiles = cvProfiles.length > 0;
 
   return (
     <div className="flex flex-col gap-10">
@@ -30,8 +34,9 @@ export default async function SettingsPage() {
             triggerLabel="Шукати вакансії"
             triggerClassName="rounded-md bg-zinc-900 px-3 py-1.5 text-base font-medium text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
             hideScheduleSuggestion={user.hideScheduleSuggestion}
+            disabled={!hasCvProfiles}
           />
-          <CreateScheduleButton cvProfiles={cvProfileOptions} />
+          <CreateScheduleButton cvProfiles={cvProfileOptions} disabled={!hasCvProfiles} />
         </div>
       </div>
 
@@ -81,10 +86,10 @@ export default async function SettingsPage() {
                   <div className="mt-1 line-clamp-2 text-sm text-zinc-500">
                     {profile.extractedText}
                   </div>
-                  <p className="mt-2 text-sm text-zinc-500">
+                  <p className="mt-2 line-clamp-2 text-sm text-zinc-500">
                     {profile.searchTerms.length > 0
                       ? `Ключові слова: ${profile.searchTerms.join(", ")}`
-                      : "Ключові слова ще не витягнуто"}
+                      : "Не вдалося витягнути ключові слова з цього CV. Спробуй завантажити CV ще раз."}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
@@ -92,7 +97,7 @@ export default async function SettingsPage() {
                     cvProfiles={cvProfileOptions}
                     defaultCvProfileId={profile.id}
                     triggerLabel="Шукати для цього CV"
-                    triggerClassName="rounded-full border border-zinc-300 px-3 py-1 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                    triggerClassName="rounded-full border border-zinc-300 px-3 py-1 text-base font-medium text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900"
                     hideScheduleSuggestion={user.hideScheduleSuggestion}
                   />
                   <form action={deleteCvProfile}>

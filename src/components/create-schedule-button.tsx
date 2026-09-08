@@ -7,9 +7,11 @@ import { ALL_CV_PROFILES } from "@/components/search-params-fields";
 export function CreateScheduleButton({
   cvProfiles,
   className,
+  disabled = false,
 }: {
   cvProfiles: { id: string; label: string }[];
   className?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -18,10 +20,11 @@ export function CreateScheduleButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={
+        disabled={disabled}
+        className={`${
           className ??
           "rounded-md border border-zinc-300 px-3 py-1.5 text-base font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-        }
+        } disabled:cursor-not-allowed disabled:opacity-60`}
       >
         Запланувати автоматичне виконання
       </button>

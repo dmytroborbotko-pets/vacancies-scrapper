@@ -23,12 +23,14 @@ export function SearchModal({
   triggerLabel,
   triggerClassName,
   hideScheduleSuggestion,
+  disabled = false,
 }: {
   cvProfiles: { id: string; label: string }[];
   defaultCvProfileId: string;
   triggerLabel: string;
   triggerClassName?: string;
   hideScheduleSuggestion: boolean;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const intervalGroupName = useId();
@@ -208,7 +210,12 @@ export function SearchModal({
 
   return (
     <>
-      <button type="button" onClick={openModal} disabled={open} className={triggerClassName}>
+      <button
+        type="button"
+        onClick={openModal}
+        disabled={open || disabled}
+        className={`${triggerClassName ?? ""} disabled:cursor-not-allowed disabled:opacity-60`}
+      >
         {triggerLabel}
       </button>
 
