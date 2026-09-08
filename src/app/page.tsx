@@ -7,7 +7,7 @@ export default async function Home() {
 
   const [vacancyCount, cvProfileCount, toApplyCount] = await Promise.all([
     prisma.vacancy.count({
-      where: { discoveries: { some: { searchConfig: { cvProfile: { userId } } } } },
+      where: { discoveries: { some: { cvProfile: { userId } } } },
     }),
     prisma.cvProfile.count({ where: { userId } }),
     prisma.match.count({
