@@ -6,7 +6,7 @@ import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 import OpenAI from "openai";
 import { z } from "zod";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { tryParseJson } from "@/lib/ai-json";
 
 export async function extractTextFromFile(
   buffer: Buffer,
@@ -28,8 +28,8 @@ export async function extractTextFromFile(
 }
 
 const client = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY,
-  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com",
 });
 
 const SearchTermsSchema = z.object({
@@ -42,7 +42,9 @@ const SearchTermsSchema = z.object({
     ),
 });
 
-const SEARCH_TERMS_SYSTEM_PROMPT = `You extract short search-engine keywords from a candidate's CV, suitable for querying a job board's keyword search (like "Python", "FastAPI", "computer vision", "embedded systems"). Prefer specific technologies, frameworks, and named domains over generic soft-skill words ("teamwork", "communication"). Return 3-15 terms, ranked by how central they are to the candidate's profile, no duplicates, no explanations.`;
+const SEARCH_TERMS_SYSTEM_PROMPT = `You extract short search-engine keywords from a candidate's CV, suitable for querying a job board's keyword search (like "Python", "FastAPI", "computer vision", "embedded systems"). Prefer specific technologies, frameworks, and named domains over generic soft-skill words ("teamwork", "communication"). Return 3-15 terms, ranked by how central they are to the candidate's profile, no duplicates, no explanations.
+
+Respond with a JSON object of this exact shape: {"terms": ["Python", "FastAPI", "computer vision"]}`;
 
 // Cached once on CvProfile.searchTerms at upload time (see
 // settings/actions.ts#uploadCvProfile) and reused as DOU/Djinni query terms
@@ -50,19 +52,20 @@ const SEARCH_TERMS_SYSTEM_PROMPT = `You extract short search-engine keywords fro
 export async function extractSearchTerms(cvText: string): Promise<string[]> {
   if (!cvText.trim()) return [];
 
-  const response = await client.chat.completions.parse({
-    model: "qwen3.7-flash",
+  const response = await client.chat.completions.create({
+    model: "deepseek-flash",
     max_tokens: 1024,
     messages: [
       { role: "system", content: SEARCH_TERMS_SYSTEM_PROMPT },
       { role: "user", content: `CV:\n${cvText}` },
     ],
-    response_format: zodResponseFormat(SearchTermsSchema, "search_terms"),
+    response_format: { type: "json_object" },
   });
 
-  const parsed = response.choices[0]?.message.parsed;
+  const content = response.choices[0]?.message.content;
+  const parsed = tryParseJson(content, SearchTermsSchema);
   if (!parsed) {
-    throw new Error("Qwen did not return parseable search terms");
+    throw new Error("DeepSeek did not return parseable search terms");
   }
   return [...new Set(parsed.terms.map((t) => t.trim()).filter(Boolean))];
 }

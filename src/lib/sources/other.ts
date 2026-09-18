@@ -1,13 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { z } from "zod";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { tryParseJson } from "@/lib/ai-json";
 import type { FetchedVacancy } from "@/lib/sources/types";
 
 const client = new Anthropic();
-const qwenClient = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY,
-  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+const deepseekClient = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com",
 });
 
 // A vacancy discovered by this web-search leg is excluded only when Claude
@@ -133,8 +133,8 @@ export async function fetchOtherVacancies(options: {
     return [];
   }
 
-  const extraction = await qwenClient.chat.completions.parse({
-    model: "qwen3.7-flash",
+  const extraction = await deepseekClient.chat.completions.create({
+    model: "deepseek-flash",
     // Sized with headroom above the narrower topic this was originally
     // tuned for — the broadened CV-driven search can plausibly surface
     // more candidates now.
@@ -143,17 +143,17 @@ export async function fetchOtherVacancies(options: {
       {
         role: "system",
         content:
-          "Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.",
+          'Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.\n\nRespond with a JSON object of this exact shape: {"vacancies": [{"title": "...", "sourceUrl": "https://...", "company": "..." or null, "rawText": "...", "publishedDaysAgo": 3 or null}]}',
       },
       { role: "user", content: searchSummary },
     ],
-    response_format: zodResponseFormat(CandidateSchema, "candidates"),
+    response_format: { type: "json_object" },
   });
 
-  const parsedOutput = extraction.choices[0]?.message.parsed;
+  const parsedOutput = tryParseJson(extraction.choices[0]?.message.content, CandidateSchema);
   if (!parsedOutput) {
     console.error(
-      "fetchOtherVacancies: Qwen extraction failed to produce parsed output (likely truncated or malformed) — searchSummary length was",
+      "fetchOtherVacancies: DeepSeek extraction failed to produce parsed output (likely truncated or malformed) — searchSummary length was",
       searchSummary.length,
     );
     return [];

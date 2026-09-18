@@ -1,10 +1,10 @@
 import OpenAI from "openai";
 import { z } from "zod";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { tryParseJson } from "@/lib/ai-json";
 
 const client = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY,
-  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com",
 });
 
 const MatchResultSchema = z.object({
@@ -30,14 +30,16 @@ const SYSTEM_PROMPT = `You score how well a candidate's CV matches a job vacancy
 
 Score 0-100 based on overlap between what the vacancy asks for (skills, stack, seniority, domain) and what the CV demonstrates. Weigh explicit technical requirements most heavily; treat "nice to have" items as minor. A candidate missing one or two secondary requirements but strong on the core stack should still score reasonably high (60-80). A candidate with a fundamentally different stack or seniority level should score low (0-30).
 
-List matched and missing requirements as short phrases, not full sentences.`;
+List matched and missing requirements as short phrases, not full sentences.
+
+Respond with a JSON object of this exact shape: {"score": 75, "matchedRequirements": ["..."], "missingRequirements": ["..."]}`;
 
 export async function scoreMatch(
   cvText: string,
   vacancyText: string,
 ): Promise<MatchResult> {
-  const response = await client.chat.completions.parse({
-    model: "qwen3.7-flash",
+  const response = await client.chat.completions.create({
+    model: "deepseek-flash",
     max_tokens: 2048,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -46,12 +48,12 @@ export async function scoreMatch(
         content: `CV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
       },
     ],
-    response_format: zodResponseFormat(MatchResultSchema, "match_result"),
+    response_format: { type: "json_object" },
   });
 
-  const parsed = response.choices[0]?.message.parsed;
+  const parsed = tryParseJson(response.choices[0]?.message.content, MatchResultSchema);
   if (!parsed) {
-    throw new Error("Qwen did not return a parseable match result");
+    throw new Error("DeepSeek did not return a parseable match result");
   }
   return parsed;
 }
@@ -82,7 +84,7 @@ export async function generateCoverLetter(
   const letterLanguage = detectLetterLanguage(vacancyText);
 
   const response = await client.chat.completions.create({
-    model: "qwen3.7-flash",
+    model: "deepseek-flash",
     max_tokens: 1024,
     messages: [
       { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
@@ -95,7 +97,7 @@ export async function generateCoverLetter(
 
   const text = response.choices[0]?.message.content;
   if (!text) {
-    throw new Error("Qwen did not return a text cover letter");
+    throw new Error("DeepSeek did not return a text cover letter");
   }
   return text.trim();
 }
