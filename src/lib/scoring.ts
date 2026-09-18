@@ -16,7 +16,7 @@ const APPLY_THRESHOLD = 55;
 // to reliably finish; any leftover backlog just gets picked up by the next
 // scoring run (cron or manual), since the query below always looks for
 // whatever still has no Match row.
-const MAX_SCORED_PER_RUN = 40;
+const MAX_SCORED_PER_RUN = 100;
 const SCORE_CONCURRENCY = 5;
 
 export interface ScoringResult {
