@@ -1,9 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { zodResponseFormat } from "openai/helpers/zod";
 import type { FetchedVacancy } from "@/lib/sources/types";
 
 const client = new Anthropic();
+const qwenClient = new OpenAI({
+  apiKey: process.env.QWEN_API_KEY,
+  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+});
 
 // A vacancy discovered by this web-search leg is excluded only when Claude
 // found an estimated publish date AND it's older than this many days — an
@@ -128,23 +133,27 @@ export async function fetchOtherVacancies(options: {
     return [];
   }
 
-  const extraction = await client.messages.parse({
-    model: "claude-haiku-4-5",
+  const extraction = await qwenClient.chat.completions.parse({
+    model: "qwen3.7-flash",
     // Sized with headroom above the narrower topic this was originally
     // tuned for — the broadened CV-driven search can plausibly surface
     // more candidates now.
     max_tokens: 8192,
-    system:
-      "Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.",
-    messages: [{ role: "user", content: searchSummary }],
-    output_config: {
-      format: zodOutputFormat(CandidateSchema),
-    },
+    messages: [
+      {
+        role: "system",
+        content:
+          "Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.",
+      },
+      { role: "user", content: searchSummary },
+    ],
+    response_format: zodResponseFormat(CandidateSchema, "candidates"),
   });
 
-  if (!extraction.parsed_output) {
+  const parsedOutput = extraction.choices[0]?.message.parsed;
+  if (!parsedOutput) {
     console.error(
-      "fetchOtherVacancies: Haiku extraction failed to produce parsed_output (likely truncated or malformed) — searchSummary length was",
+      "fetchOtherVacancies: Qwen extraction failed to produce parsed output (likely truncated or malformed) — searchSummary length was",
       searchSummary.length,
     );
     return [];
@@ -156,7 +165,7 @@ export async function fetchOtherVacancies(options: {
   // duplicate Vacancy rows despite the DB's @unique constraint, and would
   // burn maxResults slots before the final slice.
   const seenUrls = new Set<string>();
-  const deduped = extraction.parsed_output.vacancies.filter((candidate) => {
+  const deduped = parsedOutput.vacancies.filter((candidate) => {
     const normalizedUrl = candidate.sourceUrl.split("?")[0];
     if (seenUrls.has(normalizedUrl)) return false;
     seenUrls.add(normalizedUrl);

@@ -4,9 +4,9 @@
 // this throws ENOENT under Next.js/Turbopack. lib/pdf-parse.js skips it.
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { zodResponseFormat } from "openai/helpers/zod";
 
 export async function extractTextFromFile(
   buffer: Buffer,
@@ -27,7 +27,10 @@ export async function extractTextFromFile(
   throw new Error(`Непідтримуваний формат файлу: .${ext}`);
 }
 
-const client = new Anthropic();
+const client = new OpenAI({
+  apiKey: process.env.QWEN_API_KEY,
+  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+});
 
 const SearchTermsSchema = z.object({
   terms: z
@@ -47,22 +50,19 @@ const SEARCH_TERMS_SYSTEM_PROMPT = `You extract short search-engine keywords fro
 export async function extractSearchTerms(cvText: string): Promise<string[]> {
   if (!cvText.trim()) return [];
 
-  const response = await client.messages.parse({
-    model: "claude-haiku-4-5",
+  const response = await client.chat.completions.parse({
+    model: "qwen3.7-flash",
     max_tokens: 1024,
-    system: SEARCH_TERMS_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: `CV:\n${cvText}` }],
-    output_config: {
-      format: zodOutputFormat(SearchTermsSchema),
-    },
+    messages: [
+      { role: "system", content: SEARCH_TERMS_SYSTEM_PROMPT },
+      { role: "user", content: `CV:\n${cvText}` },
+    ],
+    response_format: zodResponseFormat(SearchTermsSchema, "search_terms"),
   });
 
-  if (!response.parsed_output) {
-    throw new Error("Claude did not return parseable search terms");
+  const parsed = response.choices[0]?.message.parsed;
+  if (!parsed) {
+    throw new Error("Qwen did not return parseable search terms");
   }
-  return [
-    ...new Set(
-      response.parsed_output.terms.map((t) => t.trim()).filter(Boolean),
-    ),
-  ];
+  return [...new Set(parsed.terms.map((t) => t.trim()).filter(Boolean))];
 }

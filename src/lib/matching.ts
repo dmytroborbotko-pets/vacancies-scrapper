@@ -1,8 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { zodResponseFormat } from "openai/helpers/zod";
 
-const client = new Anthropic();
+const client = new OpenAI({
+  apiKey: process.env.QWEN_API_KEY,
+  baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+});
 
 const MatchResultSchema = z.object({
   score: z
@@ -33,25 +36,24 @@ export async function scoreMatch(
   cvText: string,
   vacancyText: string,
 ): Promise<MatchResult> {
-  const response = await client.messages.parse({
-    model: "claude-haiku-4-5",
+  const response = await client.chat.completions.parse({
+    model: "qwen3.7-flash",
     max_tokens: 2048,
-    system: SYSTEM_PROMPT,
     messages: [
+      { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
         content: `CV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
       },
     ],
-    output_config: {
-      format: zodOutputFormat(MatchResultSchema),
-    },
+    response_format: zodResponseFormat(MatchResultSchema, "match_result"),
   });
 
-  if (!response.parsed_output) {
-    throw new Error("Claude did not return a parseable match result");
+  const parsed = response.choices[0]?.message.parsed;
+  if (!parsed) {
+    throw new Error("Qwen did not return a parseable match result");
   }
-  return response.parsed_output;
+  return parsed;
 }
 
 const COVER_LETTER_SYSTEM_PROMPT = `You write short, specific cover letters (motivational letters) for IT job applications on djinni.co.
@@ -79,11 +81,11 @@ export async function generateCoverLetter(
 ): Promise<string> {
   const letterLanguage = detectLetterLanguage(vacancyText);
 
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5",
+  const response = await client.chat.completions.create({
+    model: "qwen3.7-flash",
     max_tokens: 1024,
-    system: COVER_LETTER_SYSTEM_PROMPT,
     messages: [
+      { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
       {
         role: "user",
         content: `Letter language: ${letterLanguage}\n\nCV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
@@ -91,9 +93,9 @@ export async function generateCoverLetter(
     ],
   });
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Claude did not return a text cover letter");
+  const text = response.choices[0]?.message.content;
+  if (!text) {
+    throw new Error("Qwen did not return a text cover letter");
   }
-  return textBlock.text.trim();
+  return text.trim();
 }
