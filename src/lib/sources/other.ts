@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { z } from "zod";
-import { tryParseJson } from "@/lib/ai-json";
+import { noThinking, tryParseJson } from "@/lib/ai-json";
 import type { FetchedVacancy } from "@/lib/sources/types";
 
 const client = new Anthropic();
@@ -133,22 +133,24 @@ export async function fetchOtherVacancies(options: {
     return [];
   }
 
-  const extraction = await deepseekClient.chat.completions.create({
-    model: "deepseek-flash",
-    // Sized with headroom above the narrower topic this was originally
-    // tuned for — the broadened CV-driven search can plausibly surface
-    // more candidates now.
-    max_tokens: 8192,
-    messages: [
-      {
-        role: "system",
-        content:
-          'Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.\n\nRespond with a JSON object of this exact shape: {"vacancies": [{"title": "...", "sourceUrl": "https://...", "company": "..." or null, "rawText": "...", "publishedDaysAgo": 3 or null}]}',
-      },
-      { role: "user", content: searchSummary },
-    ],
-    response_format: { type: "json_object" },
-  });
+  const extraction = await deepseekClient.chat.completions.create(
+    noThinking({
+      model: "deepseek-flash",
+      // Sized with headroom above the narrower topic this was originally
+      // tuned for — the broadened CV-driven search can plausibly surface
+      // more candidates now.
+      max_tokens: 8192,
+      messages: [
+        {
+          role: "system",
+          content:
+            'Extract a structured list of vacancies from the given research notes. Only include vacancies that are clearly distinct postings with a URL.\n\nRespond with a JSON object of this exact shape: {"vacancies": [{"title": "...", "sourceUrl": "https://...", "company": "..." or null, "rawText": "...", "publishedDaysAgo": 3 or null}]}',
+        },
+        { role: "user", content: searchSummary },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  );
 
   const parsedOutput = tryParseJson(extraction.choices[0]?.message.content, CandidateSchema);
   if (!parsedOutput) {

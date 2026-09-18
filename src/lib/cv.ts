@@ -6,7 +6,7 @@ import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 import OpenAI from "openai";
 import { z } from "zod";
-import { tryParseJson } from "@/lib/ai-json";
+import { noThinking, tryParseJson } from "@/lib/ai-json";
 
 export async function extractTextFromFile(
   buffer: Buffer,
@@ -52,15 +52,17 @@ Respond with a JSON object of this exact shape: {"terms": ["Python", "FastAPI", 
 export async function extractSearchTerms(cvText: string): Promise<string[]> {
   if (!cvText.trim()) return [];
 
-  const response = await client.chat.completions.create({
-    model: "deepseek-flash",
-    max_tokens: 1024,
-    messages: [
-      { role: "system", content: SEARCH_TERMS_SYSTEM_PROMPT },
-      { role: "user", content: `CV:\n${cvText}` },
-    ],
-    response_format: { type: "json_object" },
-  });
+  const response = await client.chat.completions.create(
+    noThinking({
+      model: "deepseek-flash",
+      max_tokens: 1024,
+      messages: [
+        { role: "system", content: SEARCH_TERMS_SYSTEM_PROMPT },
+        { role: "user", content: `CV:\n${cvText}` },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  );
 
   const content = response.choices[0]?.message.content;
   const parsed = tryParseJson(content, SearchTermsSchema);

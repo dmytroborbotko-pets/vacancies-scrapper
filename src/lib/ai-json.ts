@@ -1,4 +1,22 @@
+import type OpenAI from "openai";
 import type { z } from "zod";
+
+// deepseek-flash is a reasoning model: by default it spends completion
+// tokens on a hidden chain-of-thought (returned as reasoning_content)
+// before writing the actual answer. On a low/exhausted max_tokens budget
+// (easy to hit on real, long CV/vacancy text) the budget runs out mid-thought
+// and `content` comes back empty with finish_reason "length" — reproduced
+// directly against the live API. Disabling thinking (DeepSeek-specific,
+// outside the OpenAI SDK's types) skips the chain-of-thought entirely so the
+// full budget goes to the answer.
+export function noThinking(
+  params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
+): OpenAI.Chat.ChatCompletionCreateParamsNonStreaming {
+  return {
+    ...params,
+    thinking: { type: "disabled" },
+  } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming;
+}
 
 // DeepSeek's JSON mode (unlike Anthropic/OpenAI structured outputs) only
 // guarantees syntactically valid JSON, not a specific shape — the model can

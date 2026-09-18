@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { z } from "zod";
-import { tryParseJson } from "@/lib/ai-json";
+import { noThinking, tryParseJson } from "@/lib/ai-json";
 
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -38,18 +38,20 @@ export async function scoreMatch(
   cvText: string,
   vacancyText: string,
 ): Promise<MatchResult> {
-  const response = await client.chat.completions.create({
-    model: "deepseek-flash",
-    max_tokens: 2048,
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `CV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
+  const response = await client.chat.completions.create(
+    noThinking({
+      model: "deepseek-flash",
+      max_tokens: 2048,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `CV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  );
 
   const parsed = tryParseJson(response.choices[0]?.message.content, MatchResultSchema);
   if (!parsed) {
@@ -83,17 +85,19 @@ export async function generateCoverLetter(
 ): Promise<string> {
   const letterLanguage = detectLetterLanguage(vacancyText);
 
-  const response = await client.chat.completions.create({
-    model: "deepseek-flash",
-    max_tokens: 1024,
-    messages: [
-      { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Letter language: ${letterLanguage}\n\nCV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
-      },
-    ],
-  });
+  const response = await client.chat.completions.create(
+    noThinking({
+      model: "deepseek-flash",
+      max_tokens: 1024,
+      messages: [
+        { role: "system", content: COVER_LETTER_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Letter language: ${letterLanguage}\n\nCV:\n${cvText}\n\n---\n\nVacancy:\n${vacancyText}`,
+        },
+      ],
+    }),
+  );
 
   const text = response.choices[0]?.message.content;
   if (!text) {
